@@ -70,7 +70,6 @@ public class MainActivity extends SimpleBaseGameActivity {
 		@Override
 		public Scene onCreateScene() {
 			this.mEngine.registerUpdateHandler(new FPSLogger());
-
 			final Scene scene = new Scene();
 			scene.setBackground(this.mGrassBackground);
 
