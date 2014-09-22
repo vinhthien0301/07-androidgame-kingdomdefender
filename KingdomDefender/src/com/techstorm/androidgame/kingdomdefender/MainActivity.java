@@ -1,5 +1,8 @@
 package com.techstorm.androidgame.kingdomdefender;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
@@ -19,113 +22,204 @@ import org.andengine.opengl.texture.atlas.bitmap.source.AssetBitmapTextureAtlasS
 import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 
-
 public class MainActivity extends SimpleBaseGameActivity {
 
 	// ===========================================================
-		// Constants
-		// ===========================================================
+	// Constants
+	// ===========================================================
 
-		private static final int CAMERA_WIDTH = 720;
-		private static final int CAMERA_HEIGHT = 480;
+	private static final int CAMERA_WIDTH = 720;
+	private static final int CAMERA_HEIGHT = 480;
 
-		// ===========================================================
-		// Fields
-		// ===========================================================
+	// ===========================================================
+	// Fields
+	// ===========================================================
 
-		private RepeatingSpriteBackground mGrassBackground;
+	private KingDefGame game = new KingDefGame();
+	private List<AnimatedSprite> monsters = new ArrayList<AnimatedSprite>();
+	
+	private RepeatingSpriteBackground mGrassBackground;
 
-		private BitmapTextureAtlas mBitmapTextureAtlas;
-		private TiledTextureRegion mPlayerTextureRegion;
+	private BitmapTextureAtlas mBitmapTextureAtlas;
+	private TiledTextureRegion mPlayerTextureRegion;
 
-		// ===========================================================
-		// Constructors
-		// ===========================================================
+	// ===========================================================
+	// Constructors
+	// ===========================================================
 
-		// ===========================================================
-		// Getter & Setter
-		// ===========================================================
+	// ===========================================================
+	// Getter & Setter
+	// ===========================================================
 
-		// ===========================================================
-		// Methods for/from SuperClass/Interfaces
-		// ===========================================================
+	// ===========================================================
+	// Methods for/from SuperClass/Interfaces
+	// ===========================================================
 
-		@Override
-		public EngineOptions onCreateEngineOptions() {
-			final Camera camera = new Camera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
+	@Override
+	public EngineOptions onCreateEngineOptions() {
+		final Camera camera = new Camera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
 
-			return new EngineOptions(true, ScreenOrientation.LANDSCAPE_FIXED, new RatioResolutionPolicy(CAMERA_WIDTH, CAMERA_HEIGHT), camera);
+		return new EngineOptions(true, ScreenOrientation.LANDSCAPE_FIXED,
+				new RatioResolutionPolicy(CAMERA_WIDTH, CAMERA_HEIGHT), camera);
+	}
+
+	@Override
+	public void onCreateResources() {
+		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
+
+		this.mBitmapTextureAtlas = new BitmapTextureAtlas(
+				this.getTextureManager(), 128, 128);
+		this.mPlayerTextureRegion = BitmapTextureAtlasTextureRegionFactory
+				.createTiledFromAsset(this.mBitmapTextureAtlas, this,
+						"player.png", 0, 0, 3, 4);
+		this.mGrassBackground = new RepeatingSpriteBackground(CAMERA_WIDTH,
+				CAMERA_HEIGHT, this.getTextureManager(),
+				AssetBitmapTextureAtlasSource.create(this.getAssets(),
+						"gfx/background_grass.png"),
+				this.getVertexBufferObjectManager());
+		this.mBitmapTextureAtlas.load();
+	}
+
+	@Override
+	public Scene onCreateScene() {
+		this.mEngine.registerUpdateHandler(new FPSLogger());
+		final Scene scene = new Scene();
+		scene.setBackground(this.mGrassBackground);
+
+		/*
+		 * Calculate the coordinates for the face, so its centered on the
+		 * camera.
+		 */
+		final float centerX = (CAMERA_WIDTH - this.mPlayerTextureRegion
+				.getWidth()) / 2;
+		final float centerY = (CAMERA_HEIGHT - this.mPlayerTextureRegion
+				.getHeight()) / 2;
+		game.loadLevelData();
+		/* Create the sprite and add it to the scene. */
+		for (Monster monster : game.getCurrentMonsters()) {
+			final AnimatedSprite sprite = new AnimatedSprite(monster.putting.px, monster.putting.py, monster.spriteSize.width,
+					monster.spriteSize.height, this.mPlayerTextureRegion,
+					this.getVertexBufferObjectManager());
+			
+			Location2d[] locs = game.getCurrentMonsterPath();
+			final Path path = new Path(locs.length);
+			for (Location2d point : locs) {
+				path.to(point.px, point.py);
+			}
+
+			sprite.registerEntityModifier(new LoopEntityModifier(new PathModifier(
+					30, path, null, new IPathModifierListener() {
+						@Override
+						public void onPathStarted(final PathModifier pPathModifier,
+								final IEntity pEntity) {
+
+						}
+
+						@Override
+						public void onPathWaypointStarted(
+								final PathModifier pPathModifier,
+								final IEntity pEntity, final int pWaypointIndex) {
+							switch (pWaypointIndex) {
+							case 0:
+								sprite.animate(new long[] { 200, 200, 200 }, 6, 8,
+										true);
+								break;
+							case 1:
+								sprite.animate(new long[] { 200, 200, 200 }, 3, 5,
+										true);
+								break;
+							case 2:
+								sprite.animate(new long[] { 200, 200, 200 }, 0, 2,
+										true);
+								break;
+							case 3:
+								sprite.animate(new long[] { 200, 200, 200 }, 9, 11,
+										true);
+								break;
+							}
+						}
+
+						@Override
+						public void onPathWaypointFinished(
+								final PathModifier pPathModifier,
+								final IEntity pEntity, final int pWaypointIndex) {
+
+						}
+
+						@Override
+						public void onPathFinished(
+								final PathModifier pPathModifier,
+								final IEntity pEntity) {
+
+						}
+					})));
+			scene.attachChild(sprite);
+			monsters.add(sprite);
 		}
+//		final AnimatedSprite player = new AnimatedSprite(centerX, centerY, 48,
+//				64, this.mPlayerTextureRegion,
+//				this.getVertexBufferObjectManager());
+//
+//		final Path path = new Path(5).to(10, 10).to(10, CAMERA_HEIGHT - 74)
+//				.to(CAMERA_WIDTH - 58, CAMERA_HEIGHT - 74)
+//				.to(CAMERA_WIDTH - 58, 10).to(10, 10);
+//
+//		player.registerEntityModifier(new LoopEntityModifier(new PathModifier(
+//				30, path, null, new IPathModifierListener() {
+//					@Override
+//					public void onPathStarted(final PathModifier pPathModifier,
+//							final IEntity pEntity) {
+//
+//					}
+//
+//					@Override
+//					public void onPathWaypointStarted(
+//							final PathModifier pPathModifier,
+//							final IEntity pEntity, final int pWaypointIndex) {
+//						switch (pWaypointIndex) {
+//						case 0:
+//							player.animate(new long[] { 200, 200, 200 }, 6, 8,
+//									true);
+//							break;
+//						case 1:
+//							player.animate(new long[] { 200, 200, 200 }, 3, 5,
+//									true);
+//							break;
+//						case 2:
+//							player.animate(new long[] { 200, 200, 200 }, 0, 2,
+//									true);
+//							break;
+//						case 3:
+//							player.animate(new long[] { 200, 200, 200 }, 9, 11,
+//									true);
+//							break;
+//						}
+//					}
+//
+//					@Override
+//					public void onPathWaypointFinished(
+//							final PathModifier pPathModifier,
+//							final IEntity pEntity, final int pWaypointIndex) {
+//
+//					}
+//
+//					@Override
+//					public void onPathFinished(
+//							final PathModifier pPathModifier,
+//							final IEntity pEntity) {
+//
+//					}
+//				})));
+//		scene.attachChild(player);
 
-		@Override
-		public void onCreateResources() {
-			BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
+		return scene;
+	}
 
-			this.mBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 128, 128);
-			this.mPlayerTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapTextureAtlas, this, "player.png", 0, 0, 3, 4);
-			this.mGrassBackground = new RepeatingSpriteBackground(CAMERA_WIDTH, CAMERA_HEIGHT, this.getTextureManager(), AssetBitmapTextureAtlasSource.create(this.getAssets(), "gfx/background_grass.png"), this.getVertexBufferObjectManager());
-			this.mBitmapTextureAtlas.load();
-		}
+	// ===========================================================
+	// Methods
+	// ===========================================================
 
-		@Override
-		public Scene onCreateScene() {
-			this.mEngine.registerUpdateHandler(new FPSLogger());
-			final Scene scene = new Scene();
-			scene.setBackground(this.mGrassBackground);
-
-			/* Calculate the coordinates for the face, so its centered on the camera. */
-			final float centerX = (CAMERA_WIDTH - this.mPlayerTextureRegion.getWidth()) / 2;
-			final float centerY = (CAMERA_HEIGHT - this.mPlayerTextureRegion.getHeight()) / 2;
-
-			/* Create the sprite and add it to the scene. */
-			final AnimatedSprite player = new AnimatedSprite(centerX, centerY, 48, 64, this.mPlayerTextureRegion, this.getVertexBufferObjectManager());
-
-			final Path path = new Path(5).to(10, 10).to(10, CAMERA_HEIGHT - 74).to(CAMERA_WIDTH - 58, CAMERA_HEIGHT - 74).to(CAMERA_WIDTH - 58, 10).to(10, 10);
-
-			player.registerEntityModifier(new LoopEntityModifier(new PathModifier(30, path, null, new IPathModifierListener() {
-				@Override
-				public void onPathStarted(final PathModifier pPathModifier, final IEntity pEntity) {
-
-				}
-
-				@Override
-				public void onPathWaypointStarted(final PathModifier pPathModifier, final IEntity pEntity, final int pWaypointIndex) {
-					switch(pWaypointIndex) {
-						case 0:
-							player.animate(new long[]{200, 200, 200}, 6, 8, true);
-							break;
-						case 1:
-							player.animate(new long[]{200, 200, 200}, 3, 5, true);
-							break;
-						case 2:
-							player.animate(new long[]{200, 200, 200}, 0, 2, true);
-							break;
-						case 3:
-							player.animate(new long[]{200, 200, 200}, 9, 11, true);
-							break;
-					}
-				}
-
-				@Override
-				public void onPathWaypointFinished(final PathModifier pPathModifier, final IEntity pEntity, final int pWaypointIndex) {
-
-				}
-
-				@Override
-				public void onPathFinished(final PathModifier pPathModifier, final IEntity pEntity) {
-
-				}
-			})));
-			scene.attachChild(player);
-
-			return scene;
-		}
-
-		// ===========================================================
-		// Methods
-		// ===========================================================
-
-		// ===========================================================
-		// Inner and Anonymous Classes
-		// ===========================================================
+	// ===========================================================
+	// Inner and Anonymous Classes
+	// ===========================================================
 }
