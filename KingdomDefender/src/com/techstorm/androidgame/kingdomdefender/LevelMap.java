@@ -5,15 +5,18 @@ import java.util.List;
 
 public class LevelMap {
 
-	public int width;
-	public int height;
+	// begin matrix with index 0
+	public int matrixWidth;
+	public int matrixHeight;
 	
 	public List<Tower> towers;
-	public Location2d[] monsterPath;
+	public MatrixLocation2d[] monsterPath;
 	public List<Wave> waves;
 	public int wavesIndex;
 
 	public LevelMap() {
+		matrixWidth = (int)LayerConvertor.CAMERA_WIDTH / LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE - 1;
+		matrixHeight = (int)LayerConvertor.CAMERA_HEIGHT / LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE - 1;
 		towers = new ArrayList<Tower>();
 		waves = new ArrayList<Wave>();
 		wavesIndex = 0;
@@ -27,7 +30,7 @@ public class LevelMap {
 		this.waves.add(wave);
 	} 
 	
-	public void setMonsterPath(Location2d[] path) {
+	public void setMonsterPath(MatrixLocation2d[] path) {
 		this.monsterPath = path;
 	}
 	

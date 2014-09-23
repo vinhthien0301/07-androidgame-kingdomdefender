@@ -4,9 +4,9 @@ import java.util.List;
 
 public class Monster {
 
-	public Location2d putting;
+	public MatrixLocation2d putting;
 	
-	public Size2d spriteSize;
+	public MatrixSize2d spriteSize;
 	
 	// Damage -- (integer)
 	public int attackDamage;
@@ -17,7 +17,7 @@ public class Monster {
 	// Cost -- (double) -- number of coins to award money after killed monster.
 	public double rewardCost;
 
-	public Monster(Location2d put, Size2d size) {
+	public Monster(MatrixLocation2d put, MatrixSize2d size) {
 		this.putting = put;
 		this.spriteSize = size;
 	}

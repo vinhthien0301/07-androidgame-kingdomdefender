@@ -1,6 +1,7 @@
 package com.techstorm.androidgame.kingdomdefender;
 
 public class Location2d {
+
 	public float px;
 	public float py;
 	
