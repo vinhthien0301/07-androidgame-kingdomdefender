@@ -3,11 +3,16 @@ package com.techstorm.androidgame.kingdomdefender;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.content.Context;
+
+import com.techstorm.androidgame.kingdomdefender.data.DbCreator;
+
 public class KingDefGame {
 	public List<LevelMap> levelMaps;
 	public int levelMapIndex;
 
-	public KingDefGame() {
+	public KingDefGame(Context context) {
+//		DbCreator.createSkeleton(context);
 		levelMaps = new ArrayList<LevelMap>();
 		levelMapIndex = 0;
 	}

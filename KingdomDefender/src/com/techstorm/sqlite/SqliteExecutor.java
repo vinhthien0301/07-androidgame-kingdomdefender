@@ -1,17 +1,40 @@
 package com.techstorm.sqlite;
 
-import android.app.Activity;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
 public class SqliteExecutor {
 
-	public static SQLiteDatabase createDatabase(Activity activity, String dbName) {
-		return activity.openOrCreateDatabase(dbName, Context.MODE_PRIVATE, null);
+	public static final Integer COLUMN_STRING_DEF = Integer.valueOf(0);
+	public static final Integer COLUMN_BIT_DEF = Integer.valueOf(1);
+	public static final Integer COLUMN_INTEGER_DEF = Integer.valueOf(2);
+	
+	public static SQLiteDatabase createDatabaseNotExisting(Context context, String dbName) {
+		return context.openOrCreateDatabase(dbName, Context.MODE_PRIVATE, null);
 	}
 	
-	public static void createTable(SQLiteDatabase database, String tableName, String attributes) {
-		database.execSQL("CREATE TABLE IF NOT EXISTS " + tableName +	" ("+attributes+");");
+	public static String createColumnDefinitions(ColumnDefinition... columnDefinitions) {
+		StringBuilder builder = new StringBuilder();
+		if (columnDefinitions != null && columnDefinitions.length > 0) {
+			for (ColumnDefinition columnDef : columnDefinitions) {
+				builder.append(columnDef.name);
+				builder.append(" ");
+				if (COLUMN_STRING_DEF.equals(columnDef.definition)) {
+					builder.append("VARCHAR");
+				} else if (COLUMN_BIT_DEF.equals(columnDef.definition)) {
+					builder.append("TINYINT");
+				} else if (COLUMN_INTEGER_DEF.equals(columnDef.definition)) {
+					builder.append("VARCHAR");
+				}
+				builder.append(",");
+			}
+			builder.deleteCharAt(builder.length() - 1);
+		}
+		return builder.toString();
+	}
+	
+	public static void createTable(SQLiteDatabase database, String tableName, String columns) {
+		database.execSQL("CREATE TABLE IF NOT EXISTS " + tableName +	" ("+columns+");");
 	}
 	
 	public static void queryStatement(SQLiteDatabase database, String tableName, String select) {
@@ -39,15 +62,25 @@ public class SqliteExecutor {
 	}
 	
 	private static String buildValues(String[] values) {
-		StringBuilder valuesBuilder = new StringBuilder();
+		StringBuilder builder = new StringBuilder();
 		if (values != null && values.length > 0) {
 			for (String value : values) {
-				valuesBuilder.append("'");
-				valuesBuilder.append(value);
-				valuesBuilder.append("',");
+				builder.append("'");
+				builder.append(value);
+				builder.append("',");
 			}
-			valuesBuilder.deleteCharAt(valuesBuilder.length() - 1);
+			builder.deleteCharAt(builder.length() - 1);
 		}
-		return valuesBuilder.toString();
+		return builder.toString();
+	}
+	
+	public static class ColumnDefinition {
+		public Integer definition;
+		public String name;
+		
+		public ColumnDefinition(String name, Integer definition) {
+			this.name = name;
+			this.definition = definition;
+		}
 	}
 }

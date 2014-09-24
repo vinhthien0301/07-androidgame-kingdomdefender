@@ -34,7 +34,7 @@ public class MainActivity extends SimpleBaseGameActivity {
 	// Fields
 	// ===========================================================
 
-	private KingDefGame game = new KingDefGame();
+	private KingDefGame game = new KingDefGame(this);
 	private List<AnimatedSprite> monsters = new ArrayList<AnimatedSprite>();
 	
 	private RepeatingSpriteBackground mGrassBackground;
