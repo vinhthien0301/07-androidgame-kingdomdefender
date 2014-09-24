@@ -1,4 +1,4 @@
-package com.techstorm.sqlite;
+ package com.techstorm.sqlite;
 
 public class QueryGenerator {
 

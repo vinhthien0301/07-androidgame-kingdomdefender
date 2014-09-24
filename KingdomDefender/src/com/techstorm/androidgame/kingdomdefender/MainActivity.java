@@ -34,8 +34,8 @@ public class MainActivity extends SimpleBaseGameActivity {
 	// Fields
 	// ===========================================================
 
-	private KingDefGame game = new KingDefGame(this);
-	private List<AnimatedSprite> monsters = new ArrayList<AnimatedSprite>();
+	private KingDefGame game;
+	private List<AnimatedSprite> monsters;
 	
 	private RepeatingSpriteBackground mGrassBackground;
 
@@ -64,6 +64,8 @@ public class MainActivity extends SimpleBaseGameActivity {
 
 	@Override
 	public void onCreateResources() {
+		this.game = new KingDefGame(this);
+		this.monsters = new ArrayList<AnimatedSprite>();
 		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
 
 		this.mBitmapTextureAtlas = new BitmapTextureAtlas(

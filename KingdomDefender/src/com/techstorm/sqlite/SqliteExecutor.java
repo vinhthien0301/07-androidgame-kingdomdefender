@@ -1,6 +1,7 @@
 package com.techstorm.sqlite;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 public class SqliteExecutor {
@@ -37,8 +38,12 @@ public class SqliteExecutor {
 		database.execSQL("CREATE TABLE IF NOT EXISTS " + tableName +	" ("+columns+");");
 	}
 	
-	public static void queryStatement(SQLiteDatabase database, String tableName, String select) {
-		database.rawQuery("SELECT "+select+" FROM " + tableName, null);
+	public static Cursor queryStatement(SQLiteDatabase database, String tableName, String select) {
+		return database.rawQuery("SELECT "+select+" FROM " + tableName, null);
+	}
+	
+	public static Cursor queryStatement(SQLiteDatabase database, String tableName, String select, String where) {
+		return database.rawQuery("SELECT "+select+" FROM " + tableName + " WHERE " + where + ";", null);
 	}
 	
 	public static void insertStatement(SQLiteDatabase database, String tableName, String... values) {

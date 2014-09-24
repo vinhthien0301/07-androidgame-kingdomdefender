@@ -5,9 +5,11 @@ import java.util.List;
 
 public class LevelMap {
 
+	
 	// begin matrix with index 0
 	public int matrixWidth;
 	public int matrixHeight;
+	public int level;
 	
 	public List<Tower> towers;
 	public MatrixLocation2d[] monsterPath;
