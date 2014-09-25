@@ -28,15 +28,14 @@ public class MainActivity extends SimpleBaseGameActivity {
 	// Constants
 	// ===========================================================
 
-	private static final int CAMERA_WIDTH = 720;
-	private static final int CAMERA_HEIGHT = 480;
+	
 
 	// ===========================================================
 	// Fields
 	// ===========================================================
 
-	private KingDefGame game = new KingDefGame();
-	private List<AnimatedSprite> monsters = new ArrayList<AnimatedSprite>();
+	private KingDefGame game;
+	private List<AnimatedSprite> monsters;
 	
 	private RepeatingSpriteBackground mGrassBackground;
 
@@ -57,14 +56,16 @@ public class MainActivity extends SimpleBaseGameActivity {
 
 	@Override
 	public EngineOptions onCreateEngineOptions() {
-		final Camera camera = new Camera(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
+		final Camera camera = new Camera(0, 0, LayerConvertor.CAMERA_WIDTH, LayerConvertor.CAMERA_HEIGHT);
 
 		return new EngineOptions(true, ScreenOrientation.LANDSCAPE_FIXED,
-				new RatioResolutionPolicy(CAMERA_WIDTH, CAMERA_HEIGHT), camera);
+				new RatioResolutionPolicy(LayerConvertor.CAMERA_WIDTH, LayerConvertor.CAMERA_HEIGHT), camera);
 	}
 
 	@Override
 	public void onCreateResources() {
+		this.game = new KingDefGame(this);
+		this.monsters = new ArrayList<AnimatedSprite>();
 		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
 
 		this.mBitmapTextureAtlas = new BitmapTextureAtlas(
@@ -72,8 +73,8 @@ public class MainActivity extends SimpleBaseGameActivity {
 		this.mPlayerTextureRegion = BitmapTextureAtlasTextureRegionFactory
 				.createTiledFromAsset(this.mBitmapTextureAtlas, this,
 						"player.png", 0, 0, 3, 4);
-		this.mGrassBackground = new RepeatingSpriteBackground(CAMERA_WIDTH,
-				CAMERA_HEIGHT, this.getTextureManager(),
+		this.mGrassBackground = new RepeatingSpriteBackground(LayerConvertor.CAMERA_WIDTH,
+				LayerConvertor.CAMERA_HEIGHT, this.getTextureManager(),
 				AssetBitmapTextureAtlasSource.create(this.getAssets(),
 						"gfx/background_grass.png"),
 				this.getVertexBufferObjectManager());
@@ -90,21 +91,18 @@ public class MainActivity extends SimpleBaseGameActivity {
 		 * Calculate the coordinates for the face, so its centered on the
 		 * camera.
 		 */
-		final float centerX = (CAMERA_WIDTH - this.mPlayerTextureRegion
-				.getWidth()) / 2;
-		final float centerY = (CAMERA_HEIGHT - this.mPlayerTextureRegion
-				.getHeight()) / 2;
 		game.loadLevelData();
 		/* Create the sprite and add it to the scene. */
 		for (Monster monster : game.getCurrentMonsters()) {
-			final AnimatedSprite sprite = new AnimatedSprite(monster.putting.px, monster.putting.py, monster.spriteSize.width,
+			final AnimatedSprite sprite = new AnimatedSprite(monster.putting.columnIndex, monster.putting.rowIndex, monster.spriteSize.width,
 					monster.spriteSize.height, this.mPlayerTextureRegion,
 					this.getVertexBufferObjectManager());
 			
-			Location2d[] locs = game.getCurrentMonsterPath();
+			MatrixLocation2d[] locs = game.getCurrentMonsterPath();
 			final Path path = new Path(locs.length);
-			for (Location2d point : locs) {
-				path.to(point.px, point.py);
+			for (MatrixLocation2d point : locs) {
+				Location2d locat2d = LayerConvertor.maxtrixToGraphicLocation2d(point);
+				path.to(locat2d.px, locat2d.py);
 			}
 
 			sprite.registerEntityModifier(new LoopEntityModifier(new PathModifier(
@@ -112,7 +110,7 @@ public class MainActivity extends SimpleBaseGameActivity {
 						@Override
 						public void onPathStarted(final PathModifier pPathModifier,
 								final IEntity pEntity) {
-
+							
 						}
 
 						@Override
@@ -156,61 +154,6 @@ public class MainActivity extends SimpleBaseGameActivity {
 			scene.attachChild(sprite);
 			monsters.add(sprite);
 		}
-//		final AnimatedSprite player = new AnimatedSprite(centerX, centerY, 48,
-//				64, this.mPlayerTextureRegion,
-//				this.getVertexBufferObjectManager());
-//
-//		final Path path = new Path(5).to(10, 10).to(10, CAMERA_HEIGHT - 74)
-//				.to(CAMERA_WIDTH - 58, CAMERA_HEIGHT - 74)
-//				.to(CAMERA_WIDTH - 58, 10).to(10, 10);
-//
-//		player.registerEntityModifier(new LoopEntityModifier(new PathModifier(
-//				30, path, null, new IPathModifierListener() {
-//					@Override
-//					public void onPathStarted(final PathModifier pPathModifier,
-//							final IEntity pEntity) {
-//
-//					}
-//
-//					@Override
-//					public void onPathWaypointStarted(
-//							final PathModifier pPathModifier,
-//							final IEntity pEntity, final int pWaypointIndex) {
-//						switch (pWaypointIndex) {
-//						case 0:
-//							player.animate(new long[] { 200, 200, 200 }, 6, 8,
-//									true);
-//							break;
-//						case 1:
-//							player.animate(new long[] { 200, 200, 200 }, 3, 5,
-//									true);
-//							break;
-//						case 2:
-//							player.animate(new long[] { 200, 200, 200 }, 0, 2,
-//									true);
-//							break;
-//						case 3:
-//							player.animate(new long[] { 200, 200, 200 }, 9, 11,
-//									true);
-//							break;
-//						}
-//					}
-//
-//					@Override
-//					public void onPathWaypointFinished(
-//							final PathModifier pPathModifier,
-//							final IEntity pEntity, final int pWaypointIndex) {
-//
-//					}
-//
-//					@Override
-//					public void onPathFinished(
-//							final PathModifier pPathModifier,
-//							final IEntity pEntity) {
-//
-//					}
-//				})));
-//		scene.attachChild(player);
 
 		return scene;
 	}
