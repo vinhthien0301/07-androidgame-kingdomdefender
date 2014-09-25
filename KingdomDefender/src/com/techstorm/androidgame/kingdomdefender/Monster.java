@@ -8,6 +8,8 @@ public class Monster {
 	
 	public MatrixSize2d spriteSize;
 	
+	public String name;
+	
 	// Damage -- (integer)
 	public int attackDamage;
 

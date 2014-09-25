@@ -13,6 +13,7 @@ public class LevelMap {
 	
 	public List<Tower> towers;
 	public MatrixLocation2d[] monsterPath;
+	public int waveSize;
 	public List<Wave> waves;
 	public int wavesIndex;
 
