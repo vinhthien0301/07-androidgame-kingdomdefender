@@ -11,8 +11,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import com.techstorm.sqlite.SqliteExecutor;
-
 public class DatabaseHelper extends SQLiteOpenHelper {
 	
 	//The Android's default system path of your application database.
@@ -40,8 +38,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * */
     public void createDataBase() throws IOException{
  
-    	boolean dbExist = checkDataBase();
- 
+//    	boolean dbExist = checkDataBase();
+// 
 //    	if(dbExist){
 //    		//do nothing - database already exist
 //    		

@@ -118,7 +118,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	// ===========================================================
 	// Methods
 	// ===========================================================
-	private void createShooter(Scene scene, AnimatedSprite tower, float x, float y) {
+	private void createShooter(final Scene scene, AnimatedSprite tower, float x, float y) {
 		final AnimatedSprite sprite = new AnimatedSprite(tower.getX(), tower.getY(), tower.getWidth(),
 				tower.getHeight(), this.mPlayerTextureRegion,
 				this.getVertexBufferObjectManager());
@@ -132,8 +132,35 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		path.to(x, y);
 		scene.attachChild(sprite);
 		
-		sprite.registerEntityModifier(new LoopEntityModifier(new PathModifier(
-				30, path)));
+		sprite.registerEntityModifier(new PathModifier(
+				0.5f, path, null, new IPathModifierListener() {
+					@Override
+					public void onPathStarted(final PathModifier pPathModifier,
+							final IEntity pEntity) {
+						
+					}
+
+					@Override
+					public void onPathWaypointStarted(
+							final PathModifier pPathModifier,
+							final IEntity pEntity, final int pWaypointIndex) {
+
+					}
+
+					@Override
+					public void onPathWaypointFinished(
+							final PathModifier pPathModifier,
+							final IEntity pEntity, final int pWaypointIndex) {
+
+					}
+
+					@Override
+					public void onPathFinished(
+							final PathModifier pPathModifier,
+							final IEntity pEntity) {
+						scene.detachChild(sprite);
+					}
+				}));
 		
 		
 	}
