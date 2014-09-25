@@ -4,6 +4,9 @@ import java.util.List;
 
 public class Tower {
 
+	public MatrixLocation2d putting;
+	public MatrixSize2d spriteSize;
+	
 	// Damage -- (integer)
 	public int attackDamage;
 	// Range -- (integer) -- Range that tower can shoot

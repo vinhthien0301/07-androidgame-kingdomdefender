@@ -41,4 +41,9 @@ public class LevelMap {
 	public List<Monster> getCurrentMonsters() {
 		return this.waves.get(wavesIndex).monsters;
 	}
+	
+	// Get tower of current wave
+	public List<Tower> getCurrentTowers() {
+		return this.towers;
+	}
 }

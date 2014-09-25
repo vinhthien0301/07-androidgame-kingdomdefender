@@ -30,12 +30,11 @@ public class KingDefGame {
 		DatabaseCreator.getMonster(map);
 		DatabaseCreator.getMapPath(map);
 		
-//		Wave wave = new Wave();
-//		final int centerX = (int)(LayerConvertor.CAMERA_WIDTH - 24) / 2;
-//		final int centerY = (int)(LayerConvertor.CAMERA_HEIGHT - 32) / 2;
-//		Monster monster = new Monster(new MatrixLocation2d(centerX, centerY), new MatrixSize2d(48, 64));
-//		wave.addMonster(monster);
-//		map.addWave(wave);
+		// add tower
+		Tower tower = new Tower();
+		tower.putting = new MatrixLocation2d(3, 5);
+		tower.spriteSize = new MatrixSize2d(48, 48);
+		map.towers.add(tower);
 		
 		levelMaps.add(map);
 	}
@@ -43,6 +42,11 @@ public class KingDefGame {
 	// get monster list of current level map
 	public List<Monster> getCurrentMonsters() {
 		return levelMaps.get(levelMapIndex).getCurrentMonsters();
+	}
+	
+	// get tower list of current level map
+	public List<Tower> getCurrentTowers() {
+		return levelMaps.get(levelMapIndex).getCurrentTowers();
 	}
 	
 	// get monster path of current level map

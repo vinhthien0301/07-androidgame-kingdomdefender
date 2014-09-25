@@ -12,17 +12,19 @@ import org.andengine.entity.modifier.LoopEntityModifier;
 import org.andengine.entity.modifier.PathModifier;
 import org.andengine.entity.modifier.PathModifier.IPathModifierListener;
 import org.andengine.entity.modifier.PathModifier.Path;
+import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.RepeatingSpriteBackground;
 import org.andengine.entity.sprite.AnimatedSprite;
 import org.andengine.entity.util.FPSLogger;
+import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.andengine.opengl.texture.atlas.bitmap.source.AssetBitmapTextureAtlasSource;
 import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 
-public class MainActivity extends SimpleBaseGameActivity {
+public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouchListener {
 
 	// ===========================================================
 	// Constants
@@ -36,6 +38,7 @@ public class MainActivity extends SimpleBaseGameActivity {
 
 	private KingDefGame game;
 	private List<AnimatedSprite> monsters;
+	private List<AnimatedSprite> towers;
 	
 	private RepeatingSpriteBackground mGrassBackground;
 
@@ -66,6 +69,7 @@ public class MainActivity extends SimpleBaseGameActivity {
 	public void onCreateResources() {
 		this.game = new KingDefGame(this);
 		this.monsters = new ArrayList<AnimatedSprite>();
+		this.towers = new ArrayList<AnimatedSprite>();
 		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
 
 		this.mBitmapTextureAtlas = new BitmapTextureAtlas(
@@ -86,6 +90,7 @@ public class MainActivity extends SimpleBaseGameActivity {
 		this.mEngine.registerUpdateHandler(new FPSLogger());
 		final Scene scene = new Scene();
 		scene.setBackground(this.mGrassBackground);
+		scene.setOnSceneTouchListener(this);
 
 		/*
 		 * Calculate the coordinates for the face, so its centered on the
@@ -93,6 +98,47 @@ public class MainActivity extends SimpleBaseGameActivity {
 		 */
 		game.loadLevelData();
 		/* Create the sprite and add it to the scene. */
+		createMonster(scene);
+		createTower(scene);
+
+		return scene;
+	}
+	
+	@Override
+	public boolean onSceneTouchEvent(Scene pScene, final TouchEvent pSceneTouchEvent)
+	{
+	    if (pSceneTouchEvent.isActionDown())
+	    {
+	        //execute action.
+	    	createShooter(pScene, towers.get(0), pSceneTouchEvent.getX(), pSceneTouchEvent.getY());
+	    }
+	    return false;
+	}
+
+	// ===========================================================
+	// Methods
+	// ===========================================================
+	private void createShooter(Scene scene, AnimatedSprite tower, float x, float y) {
+		final AnimatedSprite sprite = new AnimatedSprite(tower.getX(), tower.getY(), tower.getWidth(),
+				tower.getHeight(), this.mPlayerTextureRegion,
+				this.getVertexBufferObjectManager());
+		MatrixLocation2d[] locs = new MatrixLocation2d[1];
+		locs[0] = new MatrixLocation2d(3, 4);
+		final Path path = new Path(2);
+		for (MatrixLocation2d point : locs) {
+			Location2d locat2d = LayerConvertor.maxtrixToGraphicLocation2d(point);
+			path.to(locat2d.px, locat2d.py);
+		}
+		path.to(x, y);
+		scene.attachChild(sprite);
+		
+		sprite.registerEntityModifier(new LoopEntityModifier(new PathModifier(
+				30, path)));
+		
+		
+	}
+	
+	private void createMonster(Scene scene) {
 		for (Monster monster : game.getCurrentMonsters()) {
 			final AnimatedSprite sprite = new AnimatedSprite(monster.putting.columnIndex, monster.putting.rowIndex, monster.spriteSize.width,
 					monster.spriteSize.height, this.mPlayerTextureRegion,
@@ -154,13 +200,19 @@ public class MainActivity extends SimpleBaseGameActivity {
 			scene.attachChild(sprite);
 			monsters.add(sprite);
 		}
-
-		return scene;
 	}
-
-	// ===========================================================
-	// Methods
-	// ===========================================================
+	
+	private void createTower(Scene scene) {
+		for (Tower tower : game.getCurrentTowers()) {
+			Location2d loca = LayerConvertor.maxtrixToGraphicLocation2d(tower.putting);
+			final AnimatedSprite sprite = new AnimatedSprite(loca.px, loca.py, tower.spriteSize.width,
+					tower.spriteSize.height, this.mPlayerTextureRegion,
+					this.getVertexBufferObjectManager());
+			
+			scene.attachChild(sprite);
+			towers.add(sprite);
+		}
+	}
 
 	// ===========================================================
 	// Inner and Anonymous Classes
