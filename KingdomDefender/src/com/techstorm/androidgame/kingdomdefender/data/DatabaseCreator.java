@@ -14,6 +14,7 @@ import com.techstorm.androidgame.kingdomdefender.LevelMap;
 import com.techstorm.androidgame.kingdomdefender.MatrixLocation2d;
 import com.techstorm.androidgame.kingdomdefender.MatrixSize2d;
 import com.techstorm.androidgame.kingdomdefender.Monster;
+import com.techstorm.androidgame.kingdomdefender.Tower;
 import com.techstorm.androidgame.kingdomdefender.Wave;
 import com.techstorm.sqlite.SqliteExecutor;
 
@@ -118,4 +119,31 @@ public class DatabaseCreator {
     	
     	
 	}
+	
+	public static List<Tower> getShopItems() {
+		// new shop item list
+		List<Tower> shopItems = new ArrayList<Tower>();
+		
+		Cursor cur = SqliteExecutor.queryStatement(database, "K_TOWER_CHARACTER", "*");
+		//If Cursor is valid
+    	if (cur != null ) {
+    		//Move cursor to first row
+    		if  (cur.moveToFirst()) {
+    			do {
+    				Tower tower = new Tower();
+    				tower.damage = cur.getInt(cur.getColumnIndex("K_DAMAGE"));
+    				tower.armorPiercing = cur.getInt(cur.getColumnIndex("K_ARMOR_PIERCING"));
+    				tower.areaOfEffect = cur.getInt(cur.getColumnIndex("K_AREA_OF_EFFECT"));
+//    				tower.attackEffect = cur.getInt(cur.getColumnIndex("K_AREA_OF_EFFECT"));
+    				tower.range = cur.getInt(cur.getColumnIndex("K_RANGE"));
+    				tower.attackSpeed = cur.getDouble(cur.getColumnIndex("K_ATTACK_SPEED"));
+    				tower.buyCost = cur.getInt(cur.getColumnIndex("K_BUY_COST"));
+    				tower.sellCost = cur.getInt(cur.getColumnIndex("K_SELL_COST"));
+    				shopItems.add(tower);
+    			}while (cur.moveToNext()); //Move to next row
+    		}
+    	}
+    	return shopItems;
+	}
+	
 }

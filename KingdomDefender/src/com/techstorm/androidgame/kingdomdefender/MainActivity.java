@@ -39,6 +39,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	private KingDefGame game;
 	private List<AnimatedSprite> monsters;
 	private List<AnimatedSprite> towers;
+	private List<AnimatedSprite> shopItems;
+	private AnimatedSprite shopItemDragging;
 	
 	private RepeatingSpriteBackground mGrassBackground;
 
@@ -70,6 +72,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		this.game = new KingDefGame(this);
 		this.monsters = new ArrayList<AnimatedSprite>();
 		this.towers = new ArrayList<AnimatedSprite>();
+		this.shopItems = new ArrayList<AnimatedSprite>();
 		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
 
 		this.mBitmapTextureAtlas = new BitmapTextureAtlas(
@@ -100,6 +103,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		/* Create the sprite and add it to the scene. */
 		createMonster(scene);
 		createTower(scene);
+		createShop(scene);
 
 		return scene;
 	}
@@ -107,10 +111,14 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	@Override
 	public boolean onSceneTouchEvent(Scene pScene, final TouchEvent pSceneTouchEvent)
 	{
+		if (shopItemDragging != null) {
+    		shopItemDragging.setPosition(pSceneTouchEvent.getX()  - shopItemDragging.getWidth() / 2, pSceneTouchEvent.getY() - shopItemDragging.getHeight() / 2);
+    	}
 	    if (pSceneTouchEvent.isActionDown())
 	    {
 	        //execute action.
-	    	createShooter(pScene, towers.get(0), pSceneTouchEvent.getX(), pSceneTouchEvent.getY());
+	    	
+//	    	createShooter(pScene, towers.get(0), pSceneTouchEvent.getX(), pSceneTouchEvent.getY());
 	    }
 	    return false;
 	}
@@ -130,7 +138,7 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			path.to(locat2d.px, locat2d.py);
 		}
 		path.to(x, y);
-		scene.attachChild(sprite);
+		
 		
 		sprite.registerEntityModifier(new PathModifier(
 				0.5f, path, null, new IPathModifierListener() {
@@ -144,25 +152,30 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 					public void onPathWaypointStarted(
 							final PathModifier pPathModifier,
 							final IEntity pEntity, final int pWaypointIndex) {
-
+						
 					}
 
 					@Override
 					public void onPathWaypointFinished(
 							final PathModifier pPathModifier,
 							final IEntity pEntity, final int pWaypointIndex) {
-
+						
 					}
 
 					@Override
 					public void onPathFinished(
 							final PathModifier pPathModifier,
 							final IEntity pEntity) {
-						scene.detachChild(sprite);
+						mEngine.runOnUpdateThread( new Runnable() {
+                            @Override
+                            public void run() {
+                            	scene.detachChild(sprite);
+                            }
+						});
+						
 					}
 				}));
-		
-		
+		scene.attachChild(sprite);
 	}
 	
 	private void createMonster(Scene scene) {
@@ -226,6 +239,48 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 					})));
 			scene.attachChild(sprite);
 			monsters.add(sprite);
+		}
+	}
+	
+	private void createShop(final Scene scene) {
+		float distance = 50f;
+		if (game.getCurrentShop() != null && !game.getCurrentShop().isEmpty()) {
+			for (final Tower tower : game.getCurrentShop()) {
+				final AnimatedSprite sprite = new AnimatedSprite(
+						LayerConvertor.CAMERA_WIDTH / 2 + distance, 
+						LayerConvertor.CAMERA_HEIGHT - LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE - 100, 
+						LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE + 50, LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE + 50, this.mPlayerTextureRegion,
+						this.getVertexBufferObjectManager()) {
+					@Override
+					public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+						if (pSceneTouchEvent.isActionDown())
+					    {
+							TiledTextureRegion mPlayerTextureRegionLocal = mPlayerTextureRegion;
+							final AnimatedSprite dragShopItem = new AnimatedSprite(this.getX(), this.getX(), this.getWidth(),
+									this.getHeight(), mPlayerTextureRegionLocal,
+									this.getVertexBufferObjectManager()) {
+										@Override
+										public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+//											this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
+											createShooter(scene, this, monsters.get(0).getX(), monsters.get(0).getY());
+											return true;
+										}
+									};
+							shopItemDragging = dragShopItem;
+							scene.registerTouchArea(dragShopItem);
+							scene.attachChild(dragShopItem);
+					    }
+						return true;
+					}
+					
+				};
+				distance += 30;
+				
+				scene.registerTouchArea(sprite);
+				scene.setTouchAreaBindingOnActionDownEnabled(true);
+				scene.attachChild(sprite);
+				shopItems.add(sprite);
+			}
 		}
 	}
 	

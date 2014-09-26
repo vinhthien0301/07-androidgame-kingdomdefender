@@ -10,6 +10,7 @@ import com.techstorm.androidgame.kingdomdefender.data.DatabaseCreator;
 public class KingDefGame {
 	public List<LevelMap> levelMaps;
 	public int levelMapIndex;
+	public List<Tower> shopItems;
 
 	public KingDefGame(Context context) {
 		DatabaseCreator.openDatabase(context);
@@ -29,6 +30,7 @@ public class KingDefGame {
 		DatabaseCreator.getMap(map);
 		DatabaseCreator.getMonster(map);
 		DatabaseCreator.getMapPath(map);
+		shopItems = DatabaseCreator.getShopItems();
 		
 		// add tower
 		Tower tower = new Tower();
@@ -47,6 +49,11 @@ public class KingDefGame {
 	// get tower list of current level map
 	public List<Tower> getCurrentTowers() {
 		return levelMaps.get(levelMapIndex).getCurrentTowers();
+	}
+	
+	// get shop item list of current level map
+	public List<Tower> getCurrentShop() {
+		return shopItems;
 	}
 	
 	// get monster path of current level map
