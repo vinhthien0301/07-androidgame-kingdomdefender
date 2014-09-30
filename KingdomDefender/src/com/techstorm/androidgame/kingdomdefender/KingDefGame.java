@@ -36,9 +36,36 @@ public class KingDefGame {
 		Tower tower = new Tower();
 		tower.putting = new MatrixLocation2d(3, 5);
 		tower.spriteSize = new MatrixSize2d(48, 48);
+		tower.range = 5;
 		map.towers.add(tower);
 		
 		levelMaps.add(map);
+	}
+	
+	public void createTower(int shopItemIndex, MatrixLocation2d matrixLoc2d, float width, float height) {
+		Tower tower = cloneTower(shopItems.get(shopItemIndex));
+		tower.putting = matrixLoc2d;
+		tower.spriteSize = new MatrixSize2d(width, height);
+		levelMaps.get(levelMapIndex).getCurrentTowers().add(tower);
+	}
+	
+	private Tower cloneTower(Tower tower) {
+		Tower cloneTower = new Tower();
+		cloneTower.areaOfEffect = tower.areaOfEffect;
+		cloneTower.armorPiercing = tower.armorPiercing;
+		cloneTower.attackEffect = tower.attackEffect;
+		cloneTower.attackSpeed = tower.attackSpeed;
+		cloneTower.buyCost = tower.buyCost;
+		cloneTower.damage = tower.damage;
+		cloneTower.putting = tower.putting;
+		cloneTower.range = tower.range;
+		cloneTower.sellCost = tower.sellCost;
+		cloneTower.spriteSize = tower.spriteSize;
+		return cloneTower;
+	}
+	
+	public void addTower(Tower tower) {
+		levelMaps.get(levelMapIndex).getCurrentTowers().add(tower);
 	}
 	
 	// get monster list of current level map
@@ -61,4 +88,18 @@ public class KingDefGame {
 		return levelMaps.get(levelMapIndex).monsterPath;
 	}
 
+	public boolean canShoot(int towerIndex, int monsterIndex, MatrixLocation2d monsterPutting) {
+		if (towerIndex != 0) {
+			int a = 23;
+		}
+		Tower tower = getCurrentTowers().get(towerIndex);
+		Monster monster = getCurrentMonsters().get(monsterIndex);
+		monster.putting = monsterPutting;
+		if (Math.abs(monster.putting.columnIndex - tower.putting.columnIndex) <= tower.range
+				&& Math.abs(monster.putting.rowIndex - tower.putting.rowIndex) <= tower.range) {
+			return true;
+		}
+		return false;
+	}
+	
 }

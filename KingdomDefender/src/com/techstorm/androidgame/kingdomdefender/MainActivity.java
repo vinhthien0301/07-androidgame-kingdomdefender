@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.andengine.engine.camera.Camera;
+import org.andengine.engine.handler.IUpdateHandler;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
@@ -24,13 +25,12 @@ import org.andengine.opengl.texture.atlas.bitmap.source.AssetBitmapTextureAtlasS
 import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 
-public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouchListener {
+public class MainActivity extends SimpleBaseGameActivity implements
+		IOnSceneTouchListener {
 
 	// ===========================================================
 	// Constants
 	// ===========================================================
-
-	
 
 	// ===========================================================
 	// Fields
@@ -41,7 +41,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 	private List<AnimatedSprite> towers;
 	private List<AnimatedSprite> shopItems;
 	private AnimatedSprite shopItemDragging;
-	
+
+	private Scene scene;
 	private RepeatingSpriteBackground mGrassBackground;
 
 	private BitmapTextureAtlas mBitmapTextureAtlas;
@@ -61,10 +62,12 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 
 	@Override
 	public EngineOptions onCreateEngineOptions() {
-		final Camera camera = new Camera(0, 0, LayerConvertor.CAMERA_WIDTH, LayerConvertor.CAMERA_HEIGHT);
+		final Camera camera = new Camera(0, 0, LayerConvertor.CAMERA_WIDTH,
+				LayerConvertor.CAMERA_HEIGHT);
 
 		return new EngineOptions(true, ScreenOrientation.LANDSCAPE_FIXED,
-				new RatioResolutionPolicy(LayerConvertor.CAMERA_WIDTH, LayerConvertor.CAMERA_HEIGHT), camera);
+				new RatioResolutionPolicy(LayerConvertor.CAMERA_WIDTH,
+						LayerConvertor.CAMERA_HEIGHT), camera);
 	}
 
 	@Override
@@ -80,10 +83,10 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		this.mPlayerTextureRegion = BitmapTextureAtlasTextureRegionFactory
 				.createTiledFromAsset(this.mBitmapTextureAtlas, this,
 						"player.png", 0, 0, 3, 4);
-		this.mGrassBackground = new RepeatingSpriteBackground(LayerConvertor.CAMERA_WIDTH,
-				LayerConvertor.CAMERA_HEIGHT, this.getTextureManager(),
-				AssetBitmapTextureAtlasSource.create(this.getAssets(),
-						"gfx/background_grass.png"),
+		this.mGrassBackground = new RepeatingSpriteBackground(
+				LayerConvertor.CAMERA_WIDTH, LayerConvertor.CAMERA_HEIGHT,
+				this.getTextureManager(), AssetBitmapTextureAtlasSource.create(
+						this.getAssets(), "gfx/background_grass.png"),
 				this.getVertexBufferObjectManager());
 		this.mBitmapTextureAtlas.load();
 	}
@@ -94,7 +97,8 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 		final Scene scene = new Scene();
 		scene.setBackground(this.mGrassBackground);
 		scene.setOnSceneTouchListener(this);
-
+		scene.registerUpdateHandler(loop);
+		this.scene = scene;
 		/*
 		 * Calculate the coordinates for the face, so its centered on the
 		 * camera.
@@ -107,173 +111,203 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 
 		return scene;
 	}
-	
+
+	IUpdateHandler loop = new IUpdateHandler() {
+		@Override
+		public void reset() {
+		}
+
+		@Override
+		public void onUpdate(float pSecondsElapsed) {
+			// Tower shoot automatically in range
+			for (AnimatedSprite tower : towers) {
+				MatrixLocation2d monsterPutting = 
+						LayerConvertor.graphicLocationToMaxtrix2d(new Location2d(monsters.get(0).getX(), monsters.get(0).getY()));
+				if (game.canShoot(tower.getTag(), monsters.get(0).getTag(), monsterPutting)) {
+					createShooter(scene, tower, monsters.get(0)
+							.getX(), monsters.get(0).getY());
+				}
+			}
+
+		}
+
+	};
+
 	@Override
-	public boolean onSceneTouchEvent(Scene pScene, final TouchEvent pSceneTouchEvent)
-	{
+	public boolean onSceneTouchEvent(Scene pScene,
+			final TouchEvent pSceneTouchEvent) {
 		if (shopItemDragging != null) {
-    		shopItemDragging.setPosition(pSceneTouchEvent.getX()  - shopItemDragging.getWidth() / 2, pSceneTouchEvent.getY() - shopItemDragging.getHeight() / 2);
-    	}
-	    if (pSceneTouchEvent.isActionDown())
-	    {
-	        //execute action.
-	    	
-//	    	createShooter(pScene, towers.get(0), pSceneTouchEvent.getX(), pSceneTouchEvent.getY());
-	    }
-	    return false;
+			shopItemDragging.setPosition(pSceneTouchEvent.getX()
+					- shopItemDragging.getWidth() / 2, pSceneTouchEvent.getY()
+					- shopItemDragging.getHeight() / 2);
+		}
+		if (pSceneTouchEvent.isActionUp()) {
+			// execute action.
+			if (shopItemDragging != null) {
+				createTowerBought(shopItemDragging.getTag(), 
+						shopItemDragging.getX(), shopItemDragging.getY(), 
+						shopItemDragging.getWidth(), shopItemDragging.getHeight());
+				shopItemDragging = null;
+			}
+		}
+		return true;
 	}
 
 	// ===========================================================
 	// Methods
 	// ===========================================================
-	private void createShooter(final Scene scene, AnimatedSprite tower, float x, float y) {
-		final AnimatedSprite sprite = new AnimatedSprite(tower.getX(), tower.getY(), tower.getWidth(),
-				tower.getHeight(), this.mPlayerTextureRegion,
-				this.getVertexBufferObjectManager());
-		MatrixLocation2d[] locs = new MatrixLocation2d[1];
-		locs[0] = new MatrixLocation2d(3, 4);
+	public void createShooter(final Scene scene, AnimatedSprite tower,
+			float x, float y) {
+		final AnimatedSprite sprite = new AnimatedSprite(tower.getX(),
+				tower.getY(), tower.getWidth(), tower.getHeight(),
+				this.mPlayerTextureRegion, this.getVertexBufferObjectManager());
 		final Path path = new Path(2);
-		for (MatrixLocation2d point : locs) {
-			Location2d locat2d = LayerConvertor.maxtrixToGraphicLocation2d(point);
-			path.to(locat2d.px, locat2d.py);
-		}
+		path.to(tower.getX(), tower.getY());
 		path.to(x, y);
-		
-		
-		sprite.registerEntityModifier(new PathModifier(
-				0.5f, path, null, new IPathModifierListener() {
+
+		sprite.registerEntityModifier(new PathModifier(0.5f, path, null,
+				new IPathModifierListener() {
 					@Override
 					public void onPathStarted(final PathModifier pPathModifier,
 							final IEntity pEntity) {
-						
+
 					}
 
 					@Override
 					public void onPathWaypointStarted(
 							final PathModifier pPathModifier,
 							final IEntity pEntity, final int pWaypointIndex) {
-						
+
 					}
 
 					@Override
 					public void onPathWaypointFinished(
 							final PathModifier pPathModifier,
 							final IEntity pEntity, final int pWaypointIndex) {
-						
+
 					}
 
 					@Override
 					public void onPathFinished(
 							final PathModifier pPathModifier,
 							final IEntity pEntity) {
-						mEngine.runOnUpdateThread( new Runnable() {
-                            @Override
-                            public void run() {
-                            	scene.detachChild(sprite);
-                            }
+						mEngine.runOnUpdateThread(new Runnable() {
+							@Override
+							public void run() {
+								scene.detachChild(sprite);
+							}
 						});
-						
+
 					}
 				}));
 		scene.attachChild(sprite);
 	}
-	
+
 	private void createMonster(Scene scene) {
-		for (Monster monster : game.getCurrentMonsters()) {
-			final AnimatedSprite sprite = new AnimatedSprite(monster.putting.columnIndex, monster.putting.rowIndex, monster.spriteSize.width,
-					monster.spriteSize.height, this.mPlayerTextureRegion,
+		for (int index = 0; index < game.getCurrentMonsters().size(); index++) {
+			Monster monster = game.getCurrentMonsters().get(index);
+		
+			final AnimatedSprite sprite = new AnimatedSprite(
+					monster.putting.columnIndex, monster.putting.rowIndex,
+					monster.spriteSize.width, monster.spriteSize.height,
+					this.mPlayerTextureRegion,
 					this.getVertexBufferObjectManager());
-			
+
 			MatrixLocation2d[] locs = game.getCurrentMonsterPath();
 			final Path path = new Path(locs.length);
 			for (MatrixLocation2d point : locs) {
-				Location2d locat2d = LayerConvertor.maxtrixToGraphicLocation2d(point);
+				Location2d locat2d = LayerConvertor
+						.maxtrixToGraphicLocation2d(point);
 				path.to(locat2d.px, locat2d.py);
 			}
 
-			sprite.registerEntityModifier(new LoopEntityModifier(new PathModifier(
-					30, path, null, new IPathModifierListener() {
-						@Override
-						public void onPathStarted(final PathModifier pPathModifier,
-								final IEntity pEntity) {
-							
-						}
+			sprite.registerEntityModifier(new LoopEntityModifier(
+					new PathModifier(30, path, null,
+							new IPathModifierListener() {
+								@Override
+								public void onPathStarted(
+										final PathModifier pPathModifier,
+										final IEntity pEntity) {
 
-						@Override
-						public void onPathWaypointStarted(
-								final PathModifier pPathModifier,
-								final IEntity pEntity, final int pWaypointIndex) {
-							switch (pWaypointIndex) {
-							case 0:
-								sprite.animate(new long[] { 200, 200, 200 }, 6, 8,
-										true);
-								break;
-							case 1:
-								sprite.animate(new long[] { 200, 200, 200 }, 3, 5,
-										true);
-								break;
-							case 2:
-								sprite.animate(new long[] { 200, 200, 200 }, 0, 2,
-										true);
-								break;
-							case 3:
-								sprite.animate(new long[] { 200, 200, 200 }, 9, 11,
-										true);
-								break;
-							}
-						}
+								}
 
-						@Override
-						public void onPathWaypointFinished(
-								final PathModifier pPathModifier,
-								final IEntity pEntity, final int pWaypointIndex) {
+								@Override
+								public void onPathWaypointStarted(
+										final PathModifier pPathModifier,
+										final IEntity pEntity,
+										final int pWaypointIndex) {
+									switch (pWaypointIndex) {
+									case 0:
+										sprite.animate(new long[] { 200, 200,
+												200 }, 6, 8, true);
+										break;
+									case 1:
+										sprite.animate(new long[] { 200, 200,
+												200 }, 3, 5, true);
+										break;
+									case 2:
+										sprite.animate(new long[] { 200, 200,
+												200 }, 0, 2, true);
+										break;
+									case 3:
+										sprite.animate(new long[] { 200, 200,
+												200 }, 9, 11, true);
+										break;
+									}
+								}
 
-						}
+								@Override
+								public void onPathWaypointFinished(
+										final PathModifier pPathModifier,
+										final IEntity pEntity,
+										final int pWaypointIndex) {
 
-						@Override
-						public void onPathFinished(
-								final PathModifier pPathModifier,
-								final IEntity pEntity) {
+								}
 
-						}
-					})));
+								@Override
+								public void onPathFinished(
+										final PathModifier pPathModifier,
+										final IEntity pEntity) {
+
+								}
+							})));
 			scene.attachChild(sprite);
 			monsters.add(sprite);
+			sprite.setTag(index);
 		}
 	}
-	
+
 	private void createShop(final Scene scene) {
 		float distance = 50f;
 		if (game.getCurrentShop() != null && !game.getCurrentShop().isEmpty()) {
-			for (final Tower tower : game.getCurrentShop()) {
+			for (int index = 0; index < game.getCurrentShop().size(); index++) {
 				final AnimatedSprite sprite = new AnimatedSprite(
-						LayerConvertor.CAMERA_WIDTH / 2 + distance, 
-						LayerConvertor.CAMERA_HEIGHT - LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE - 100, 
-						LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE + 50, LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE + 50, this.mPlayerTextureRegion,
+						LayerConvertor.CAMERA_WIDTH / 2 + distance,
+						LayerConvertor.CAMERA_HEIGHT
+								- LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE
+								- 100,
+						LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE + 50,
+						LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE + 50,
+						this.mPlayerTextureRegion,
 						this.getVertexBufferObjectManager()) {
 					@Override
-					public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
-						if (pSceneTouchEvent.isActionDown())
-					    {
-							TiledTextureRegion mPlayerTextureRegionLocal = mPlayerTextureRegion;
-							final AnimatedSprite dragShopItem = new AnimatedSprite(this.getX(), this.getX(), this.getWidth(),
-									this.getHeight(), mPlayerTextureRegionLocal,
-									this.getVertexBufferObjectManager()) {
-										@Override
-										public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
-//											this.setPosition(pSceneTouchEvent.getX() - this.getWidth() / 2, pSceneTouchEvent.getY() - this.getHeight() / 2);
-											createShooter(scene, this, monsters.get(0).getX(), monsters.get(0).getY());
-											return true;
-										}
-									};
+					public boolean onAreaTouched(
+							final TouchEvent pSceneTouchEvent,
+							final float pTouchAreaLocalX,
+							final float pTouchAreaLocalY) {
+						if (pSceneTouchEvent.isActionDown()) {
+							AnimatedSprite dragShopItem = createShopItemDragging(this.getTag(), 
+									this.getX(), this.getY(), 
+									this.getWidth(), this.getHeight());
 							shopItemDragging = dragShopItem;
-							scene.registerTouchArea(dragShopItem);
 							scene.attachChild(dragShopItem);
-					    }
+						}
+						onSceneTouchEvent(scene, pSceneTouchEvent);
 						return true;
 					}
-					
+
 				};
+				sprite.setTag(index);
 				distance += 30;
 				
 				scene.registerTouchArea(sprite);
@@ -283,14 +317,42 @@ public class MainActivity extends SimpleBaseGameActivity implements IOnSceneTouc
 			}
 		}
 	}
+
+	private AnimatedSprite createShopItemDragging(int shopItemIndex, float graphicX, float graphicY, float width, float height) {
+		final AnimatedSprite shopItem = new AnimatedSprite(
+				graphicX, graphicY, width, height, mPlayerTextureRegion,
+				this.getVertexBufferObjectManager());
+		shopItem.setTag(shopItemIndex);
+		return shopItem;
+	}
+	
+	private AnimatedSprite createTowerBought(int shopItemIndex, float graphicX, float graphicY, float width, float height) {
+		Location2d location2d = new Location2d(graphicX, graphicY); 
+		game.createTower(shopItemIndex, LayerConvertor.graphicLocationToMaxtrix2d(location2d), width, height);
+		final AnimatedSprite tower = new AnimatedSprite(
+				graphicX, graphicY, width, height, mPlayerTextureRegion,
+				this.getVertexBufferObjectManager());
+		tower.setTag(towers.size());
+		towers.add(tower);
+//		mEngine.runOnUpdateThread(new Runnable() {
+//			@Override
+//			public void run() {
+//				scene.detachChild(sprite);
+//			}
+//		});
+		return tower;
+	}
 	
 	private void createTower(Scene scene) {
-		for (Tower tower : game.getCurrentTowers()) {
-			Location2d loca = LayerConvertor.maxtrixToGraphicLocation2d(tower.putting);
-			final AnimatedSprite sprite = new AnimatedSprite(loca.px, loca.py, tower.spriteSize.width,
-					tower.spriteSize.height, this.mPlayerTextureRegion,
+		for (int index = 0; index < game.getCurrentTowers().size(); index++) {
+			Tower tower = game.getCurrentTowers().get(index);
+			Location2d loca = LayerConvertor
+					.maxtrixToGraphicLocation2d(tower.putting);
+			final AnimatedSprite sprite = new AnimatedSprite(loca.px, loca.py,
+					tower.spriteSize.width, tower.spriteSize.height,
+					this.mPlayerTextureRegion,
 					this.getVertexBufferObjectManager());
-			
+			sprite.setTag(index);
 			scene.attachChild(sprite);
 			towers.add(sprite);
 		}

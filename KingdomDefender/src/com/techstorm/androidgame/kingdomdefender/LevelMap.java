@@ -7,6 +7,7 @@ public class LevelMap {
 
 	
 	// begin matrix with index 0
+	public int money;
 	public int matrixWidth;
 	public int matrixHeight;
 	public int level;
@@ -23,6 +24,7 @@ public class LevelMap {
 		towers = new ArrayList<Tower>();
 		waves = new ArrayList<Wave>();
 		wavesIndex = 0;
+		money = 0;
 	}
 	
 	public void addTower(Tower tower) {
