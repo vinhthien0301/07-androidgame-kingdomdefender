@@ -42,6 +42,10 @@ public class KingDefGame {
 		map.towers.add(tower);
 		
 		levelMaps.add(map);
+		
+		
+		// init money for testing
+		levelMaps.get(levelMapIndex).setMoney(100);
 	}
 	
 	public void createTower(int shopItemIndex, MatrixLocation2d matrixLoc2d, float width, float height) {
@@ -100,7 +104,10 @@ public class KingDefGame {
 		Monster monster = getCurrentMonsters().get(monsterIndex);
 		monster.hp -= calcHpDamaged(towerIndex, monsterIndex);
 		if (monster.hp <= 0) {
-			levelMaps.get(levelMapIndex).getCurrentMonsters().remove(monster);
+			List<Monster> monsters = levelMaps.get(levelMapIndex).getCurrentMonsters();
+			if (monsters != null && !monsters.isEmpty()) {
+//				levelMaps.get(levelMapIndex).getCurrentMonsters().remove(monster);
+			}
 			return Monster.DEAD;
 		}
 		return Monster.LIVE;
@@ -112,11 +119,25 @@ public class KingDefGame {
 	}
 	
 	public boolean canShoot(int towerIndex, int monsterIndex, MatrixLocation2d monsterPutting) {
+		if (getCurrentTowers() == null || getCurrentTowers().isEmpty()) {
+			return false;
+		}
+		if (getCurrentMonsters() == null || getCurrentMonsters().isEmpty()) {
+			return false;
+		}
 		Tower tower = getCurrentTowers().get(towerIndex);
 		Monster monster = getCurrentMonsters().get(monsterIndex);
 		monster.putting = monsterPutting;
 		if (Math.abs(monster.putting.columnIndex - tower.putting.columnIndex) <= tower.range
 				&& Math.abs(monster.putting.rowIndex - tower.putting.rowIndex) <= tower.range) {
+			return true;
+		}
+		return false;
+	}
+
+	public boolean canBuy(int shopItemIndex) {
+		Tower shopItem = shopItems.get(shopItemIndex);
+		if (levelMaps.get(levelMapIndex).getMoney() >= shopItem.buyCost) {
 			return true;
 		}
 		return false;

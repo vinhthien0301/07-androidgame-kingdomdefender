@@ -220,11 +220,11 @@ public class MainActivity extends SimpleBaseGameActivity implements
 							@Override
 							public void run() {
 								int monsterStatus = game.shoot(towerIndex, monsterIndex);
-								if (monsterStatus == Monster.DEAD) {
-									AnimatedSprite monster =  getGraphicMonster(monsterIndex);
-									monsters.remove(monster);
-									scene.detachChild(monster);
-								}
+//								if (monsterStatus == Monster.DEAD) {
+//									AnimatedSprite monster =  getGraphicMonster(monsterIndex);
+//									monsters.remove(monster);
+//									scene.detachChild(monster);
+//								}
 								scene.detachChild(sprite);
 							}
 						});
@@ -334,11 +334,13 @@ public class MainActivity extends SimpleBaseGameActivity implements
 							final float pTouchAreaLocalX,
 							final float pTouchAreaLocalY) {
 						if (pSceneTouchEvent.isActionDown()) {
-							AnimatedSprite dragShopItem = createShopItemDragging(this.getTag(), 
-									this.getX(), this.getY(), 
-									this.getWidth(), this.getHeight());
-							shopItemDragging = dragShopItem;
-							scene.attachChild(dragShopItem);
+							if (game.canBuy(this.getTag())) {
+								AnimatedSprite dragShopItem = createShopItemDragging(this.getTag(), 
+										this.getX(), this.getY(), 
+										this.getWidth(), this.getHeight());
+								shopItemDragging = dragShopItem;
+								scene.attachChild(dragShopItem);
+							}
 						}
 						onSceneTouchEvent(scene, pSceneTouchEvent);
 						return true;
