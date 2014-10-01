@@ -107,6 +107,7 @@ public class DatabaseCreator {
     		    			do {
     		    				monster.attackDamage = cur.getInt(cur.getColumnIndex("K_DAMAGE"));
     		    				monster.rewardCost = cur.getInt(cur.getColumnIndex("K_REWARD"));
+    		    				monster.hp = cur.getInt(cur.getColumnIndex("K_HP"));
     		    				monster.name = cur.getString(cur.getColumnIndex("K_NAME"));
 
     		    			}while (cur.moveToNext()); //Move to next row

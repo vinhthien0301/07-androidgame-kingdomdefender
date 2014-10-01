@@ -17,13 +17,22 @@ import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.RepeatingSpriteBackground;
 import org.andengine.entity.sprite.AnimatedSprite;
+import org.andengine.entity.text.Text;
 import org.andengine.entity.util.FPSLogger;
 import org.andengine.input.touch.TouchEvent;
+import org.andengine.opengl.font.Font;
+import org.andengine.opengl.font.StrokeFont;
+import org.andengine.opengl.texture.ITexture;
+import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.andengine.opengl.texture.atlas.bitmap.source.AssetBitmapTextureAtlasSource;
 import org.andengine.opengl.texture.region.TiledTextureRegion;
+import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
+
+import android.graphics.Color;
+import android.graphics.Typeface;
 
 public class MainActivity extends SimpleBaseGameActivity implements
 		IOnSceneTouchListener {
@@ -32,15 +41,20 @@ public class MainActivity extends SimpleBaseGameActivity implements
 	// Constants
 	// ===========================================================
 
+	private static final int FONT_SIZE = 48;
+	
 	// ===========================================================
 	// Fields
 	// ===========================================================
 
+	private StrokeFont mStrokeFont;
+	
 	private KingDefGame game;
 	private List<AnimatedSprite> monsters;
 	private List<AnimatedSprite> towers;
 	private List<AnimatedSprite> shopItems;
 	private AnimatedSprite shopItemDragging;
+	private Text textStroke;
 
 	private Scene scene;
 	private RepeatingSpriteBackground mGrassBackground;
@@ -76,6 +90,11 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		this.monsters = new ArrayList<AnimatedSprite>();
 		this.towers = new ArrayList<AnimatedSprite>();
 		this.shopItems = new ArrayList<AnimatedSprite>();
+
+		final ITexture strokeFontTexture = new BitmapTextureAtlas(this.getTextureManager(), 256, 256, TextureOptions.BILINEAR);
+		this.mStrokeFont = new StrokeFont(this.getFontManager(), strokeFontTexture, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), FONT_SIZE, true, Color.BLACK, 2, Color.WHITE);
+		this.mStrokeFont.load();
+		
 		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
 
 		this.mBitmapTextureAtlas = new BitmapTextureAtlas(
@@ -108,6 +127,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		createMonster(scene);
 		createTower(scene);
 		createShop(scene);
+		createInformationBar(scene);
 
 		return scene;
 	}
@@ -123,9 +143,11 @@ public class MainActivity extends SimpleBaseGameActivity implements
 			for (AnimatedSprite tower : towers) {
 				MatrixLocation2d monsterPutting = 
 						LayerConvertor.graphicLocationToMaxtrix2d(new Location2d(monsters.get(0).getX(), monsters.get(0).getY()));
-				if (game.canShoot(tower.getTag(), monsters.get(0).getTag(), monsterPutting)) {
-					createShooter(scene, tower, monsters.get(0)
-							.getX(), monsters.get(0).getY());
+				for (AnimatedSprite monster : monsters) {
+					if (game.canShoot(tower.getTag(), monster.getTag(), monsterPutting)) {
+						createShooter(scene, tower.getTag(), monster.getTag(), tower, monster
+								.getX(), monster.getY());
+					}
 				}
 			}
 
@@ -148,6 +170,8 @@ public class MainActivity extends SimpleBaseGameActivity implements
 						shopItemDragging.getX(), shopItemDragging.getY(), 
 						shopItemDragging.getWidth(), shopItemDragging.getHeight());
 				shopItemDragging = null;
+				
+				textStroke.setText(String.valueOf(game.getCurrentMoney()));
 			}
 		}
 		return true;
@@ -156,8 +180,9 @@ public class MainActivity extends SimpleBaseGameActivity implements
 	// ===========================================================
 	// Methods
 	// ===========================================================
-	public void createShooter(final Scene scene, AnimatedSprite tower,
-			float x, float y) {
+	public void createShooter(final Scene scene, final int towerIndex, final int monsterIndex, 
+			AnimatedSprite tower, float x, float y) {
+		
 		final AnimatedSprite sprite = new AnimatedSprite(tower.getX(),
 				tower.getY(), tower.getWidth(), tower.getHeight(),
 				this.mPlayerTextureRegion, this.getVertexBufferObjectManager());
@@ -194,6 +219,12 @@ public class MainActivity extends SimpleBaseGameActivity implements
 						mEngine.runOnUpdateThread(new Runnable() {
 							@Override
 							public void run() {
+								int monsterStatus = game.shoot(towerIndex, monsterIndex);
+								if (monsterStatus == Monster.DEAD) {
+									AnimatedSprite monster =  getGraphicMonster(monsterIndex);
+									monsters.remove(monster);
+									scene.detachChild(monster);
+								}
 								scene.detachChild(sprite);
 							}
 						});
@@ -277,6 +308,13 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		}
 	}
 
+	private void createInformationBar(final Scene scene) {
+		final VertexBufferObjectManager vertexBufferObjectManager = this.getVertexBufferObjectManager();
+		int textLength = 10;
+		textStroke = new Text(300, 200, this.mStrokeFont, String.valueOf(game.getCurrentMoney()), textLength, vertexBufferObjectManager);
+		scene.attachChild(textStroke);
+	}
+	
 	private void createShop(final Scene scene) {
 		float distance = 50f;
 		if (game.getCurrentShop() != null && !game.getCurrentShop().isEmpty()) {
@@ -334,12 +372,6 @@ public class MainActivity extends SimpleBaseGameActivity implements
 				this.getVertexBufferObjectManager());
 		tower.setTag(towers.size());
 		towers.add(tower);
-//		mEngine.runOnUpdateThread(new Runnable() {
-//			@Override
-//			public void run() {
-//				scene.detachChild(sprite);
-//			}
-//		});
 		return tower;
 	}
 	
@@ -358,6 +390,15 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		}
 	}
 
+	private AnimatedSprite getGraphicMonster(int tag) {
+		for (AnimatedSprite monster : monsters) {
+			if (monster.getTag() == tag) {
+				return monster;
+			}
+		}
+		return null;
+	}
+	
 	// ===========================================================
 	// Inner and Anonymous Classes
 	// ===========================================================

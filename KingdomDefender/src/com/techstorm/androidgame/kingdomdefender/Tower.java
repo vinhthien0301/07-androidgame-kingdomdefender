@@ -23,10 +23,10 @@ public class Tower {
 	// Speed -- (double) -- number of bullet / 1 second
 	public double attackSpeed;
 
-	// BUY Cost -- (double) -- number of coins to build tower in map
-	public double buyCost;
+	// BUY Cost -- (integer) -- number of coins to build tower in map
+	public int buyCost;
 
-	// SELL Cost -- (double) -- number of coins to sell tower in map
-	public double sellCost;
+	// SELL Cost -- (integer) -- number of coins to sell tower in map
+	public int sellCost;
 	
 }

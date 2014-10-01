@@ -4,11 +4,17 @@ import java.util.List;
 
 public class Monster {
 
+	public static final Integer DEAD = Integer.valueOf(0);
+	public static final Integer LIVE = Integer.valueOf(1);
+	
 	public MatrixLocation2d putting;
 	
 	public MatrixSize2d spriteSize;
 	
 	public String name;
+	
+	// Hearth blood
+	public int hp;
 	
 	// Damage -- (integer)
 	public int attackDamage;

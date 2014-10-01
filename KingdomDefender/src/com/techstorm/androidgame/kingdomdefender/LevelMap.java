@@ -7,7 +7,7 @@ public class LevelMap {
 
 	
 	// begin matrix with index 0
-	public int money;
+	public int moneyAvailable;
 	public int matrixWidth;
 	public int matrixHeight;
 	public int level;
@@ -24,7 +24,7 @@ public class LevelMap {
 		towers = new ArrayList<Tower>();
 		waves = new ArrayList<Wave>();
 		wavesIndex = 0;
-		money = 0;
+		moneyAvailable = 0;
 	}
 	
 	public void addTower(Tower tower) {
@@ -47,5 +47,17 @@ public class LevelMap {
 	// Get tower of current wave
 	public List<Tower> getCurrentTowers() {
 		return this.towers;
+	}
+	
+	public int getMoney() {
+		return moneyAvailable;
+	}
+	
+	public void setMoney(int newMoney) {
+		moneyAvailable = newMoney;
+	}
+	
+	public void subsMoney(int money) {
+		moneyAvailable -= money;
 	}
 }
