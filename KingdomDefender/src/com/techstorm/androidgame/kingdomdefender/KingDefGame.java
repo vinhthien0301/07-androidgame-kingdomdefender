@@ -11,11 +11,14 @@ public class KingDefGame {
 	public List<LevelMap> levelMaps;
 	public int levelMapIndex;
 	public List<Tower> shopItems;
+	public List<Monster> monsterCharacter;
+	public Counter monsterNumber;
 
 	public KingDefGame(Context context) {
 		DatabaseCreator.openDatabase(context);
 		levelMaps = new ArrayList<LevelMap>();
 		levelMapIndex = 0;
+		monsterNumber = new Counter();
 	}
 
 	// Check end game
@@ -28,9 +31,11 @@ public class KingDefGame {
 		levelMaps = new ArrayList<LevelMap>();
 		LevelMap map = new LevelMap();
 		DatabaseCreator.getMap(map);
-		DatabaseCreator.getMonster(map);
+		monsterCharacter = DatabaseCreator.getMonsterCharacter();
+		DatabaseCreator.getMonster(map, monsterNumber);
 		DatabaseCreator.getMapPath(map);
 		shopItems = DatabaseCreator.getShopItems();
+		
 		
 		// add tower
 		Tower tower = new Tower();
@@ -42,10 +47,12 @@ public class KingDefGame {
 		map.towers.add(tower);
 		
 		levelMaps.add(map);
-		
-		
 		// init money for testing
 		levelMaps.get(levelMapIndex).setMoney(100);
+	}
+	
+	public int getMonsterNumber() {
+		return monsterNumber.getNumber();
 	}
 	
 	public void createTower(int shopItemIndex, MatrixLocation2d matrixLoc2d, float width, float height) {
@@ -101,13 +108,16 @@ public class KingDefGame {
 	}
 
 	public int shoot(int towerIndex, int monsterIndex) {
-		Monster monster = getCurrentMonsters().get(monsterIndex);
+		if (getCurrentMonsters() == null || getCurrentMonsters().isEmpty()) {
+			return Monster.DEAD;
+		}
+		Monster monster = getMonster(monsterNumber.getNumber());
+		if (monster == null) {
+			return Monster.DEAD;
+		}
 		monster.hp -= calcHpDamaged(towerIndex, monsterIndex);
 		if (monster.hp <= 0) {
-			List<Monster> monsters = levelMaps.get(levelMapIndex).getCurrentMonsters();
-			if (monsters != null && !monsters.isEmpty()) {
-//				levelMaps.get(levelMapIndex).getCurrentMonsters().remove(monster);
-			}
+			levelMaps.get(levelMapIndex).getCurrentMonsters().remove(monster);
 			return Monster.DEAD;
 		}
 		return Monster.LIVE;
@@ -118,6 +128,18 @@ public class KingDefGame {
 		return tower.damage;
 	}
 	
+	public Monster getMonster(int monsterNumber) {
+		Monster monster = null;
+		if (getCurrentMonsters() != null && !getCurrentMonsters().isEmpty()) {
+			for (Monster monsterItem : getCurrentMonsters()) {
+				if (monsterItem.number == monsterNumber) {
+					monster = monsterItem;
+				}
+			}
+		}
+		return monster;
+	}
+	
 	public boolean canShoot(int towerIndex, int monsterIndex, MatrixLocation2d monsterPutting) {
 		if (getCurrentTowers() == null || getCurrentTowers().isEmpty()) {
 			return false;
@@ -126,7 +148,10 @@ public class KingDefGame {
 			return false;
 		}
 		Tower tower = getCurrentTowers().get(towerIndex);
-		Monster monster = getCurrentMonsters().get(monsterIndex);
+		Monster monster = getMonster(monsterIndex);
+		if (monster == null) {
+			return false;
+		}
 		monster.putting = monsterPutting;
 		if (Math.abs(monster.putting.columnIndex - tower.putting.columnIndex) <= tower.range
 				&& Math.abs(monster.putting.rowIndex - tower.putting.rowIndex) <= tower.range) {
@@ -141,6 +166,30 @@ public class KingDefGame {
 			return true;
 		}
 		return false;
+	}
+	
+	public Monster createMonster(int monsterCharacterIndex, MatrixLocation2d matrixLoc2d, MatrixSize2d matrixSize2d) {
+		if (monsterCharacter == null || monsterCharacter.isEmpty()) {
+			return null;
+		}
+		Monster monster = cloneMonster(monsterCharacter.get(monsterCharacterIndex));
+		monster.putting = matrixLoc2d;
+		monster.spriteSize = matrixSize2d;
+		monster.number = monsterNumber.getNumber();
+		levelMaps.get(levelMapIndex).getCurrentMonsters().add(monster);
+		return monster;
+	}
+	
+	private Monster cloneMonster(Monster monster) {
+		Monster cloneMonster = new Monster();
+		cloneMonster.attackDamage = monster.attackDamage;
+		cloneMonster.hp = monster.hp;
+		cloneMonster.hurtEffect = monster.hurtEffect;
+		cloneMonster.name = monster.name;
+		cloneMonster.putting = monster.putting;
+		cloneMonster.rewardCost = monster.rewardCost;
+		cloneMonster.spriteSize = monster.spriteSize;
+		return cloneMonster;
 	}
 	
 }

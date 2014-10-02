@@ -9,6 +9,7 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 
+import com.techstorm.androidgame.kingdomdefender.Counter;
 import com.techstorm.androidgame.kingdomdefender.LayerConvertor;
 import com.techstorm.androidgame.kingdomdefender.LevelMap;
 import com.techstorm.androidgame.kingdomdefender.MatrixLocation2d;
@@ -83,7 +84,7 @@ public class DatabaseCreator {
     	map.setMonsterPath(matrixLoc2ds.toArray(locs));
 	}
 	
-	public static void getMonster(LevelMap map) {
+	public static void getMonster(LevelMap map, Counter monsterNumber) {
 		int characterId = 0;
 		Cursor c = SqliteExecutor.queryStatement(database, "K_MONSTER", "*", "K_MAP_LEVEL = "+String.valueOf(map.level));
 		//If Cursor is valid
@@ -105,11 +106,9 @@ public class DatabaseCreator {
     		    		//Move cursor to first row
     		    		if  (cur.moveToFirst()) {
     		    			do {
-    		    				monster.attackDamage = cur.getInt(cur.getColumnIndex("K_DAMAGE"));
-    		    				monster.rewardCost = cur.getInt(cur.getColumnIndex("K_REWARD"));
-    		    				monster.hp = cur.getInt(cur.getColumnIndex("K_HP"));
-    		    				monster.name = cur.getString(cur.getColumnIndex("K_NAME"));
-
+    		    				monster.number = monsterNumber.getNumber();
+    		    				monsterNumber.increase(1);
+    		    				setFieldMonsterCharacter(monster, cur);
     		    			}while (cur.moveToNext()); //Move to next row
     		    		}
     		    	}
@@ -145,6 +144,32 @@ public class DatabaseCreator {
     		}
     	}
     	return shopItems;
+	}
+
+	public static List<Monster> getMonsterCharacter() {
+		// new shop item list
+		List<Monster> monsterCharacters = new ArrayList<Monster>();
+		
+		Cursor cur = SqliteExecutor.queryStatement(database, "K_MONSTER_CHARACTER", "*");
+		//If Cursor is valid
+    	if (cur != null ) {
+    		//Move cursor to first row
+    		if  (cur.moveToFirst()) {
+    			do {
+    				Monster monsterCharacter = new Monster();
+    				setFieldMonsterCharacter(monsterCharacter, cur);
+    				monsterCharacters.add(monsterCharacter);
+    			}while (cur.moveToNext()); //Move to next row
+    		}
+    	}
+    	return monsterCharacters;
+	}
+	
+	private static void setFieldMonsterCharacter(Monster monsterCharacter, Cursor cur) {
+		monsterCharacter.attackDamage = cur.getInt(cur.getColumnIndex("K_DAMAGE"));
+		monsterCharacter.rewardCost = cur.getInt(cur.getColumnIndex("K_REWARD"));
+		monsterCharacter.hp = cur.getInt(cur.getColumnIndex("K_HP"));
+		monsterCharacter.name = cur.getString(cur.getColumnIndex("K_NAME"));
 	}
 	
 }

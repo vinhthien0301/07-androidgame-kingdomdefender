@@ -7,6 +7,8 @@ public class Monster {
 	public static final Integer DEAD = Integer.valueOf(0);
 	public static final Integer LIVE = Integer.valueOf(1);
 	
+	public int number;
+	
 	public MatrixLocation2d putting;
 	
 	public MatrixSize2d spriteSize;
@@ -16,7 +18,7 @@ public class Monster {
 	// Hearth blood
 	public int hp;
 	
-	// Damage -- (integer)
+	// Damage -- (integer) -- if any
 	public int attackDamage;
 
 	// Hurt effect
@@ -25,6 +27,10 @@ public class Monster {
 	// Cost -- (double) -- number of coins to award money after killed monster.
 	public double rewardCost;
 
+	public Monster() {
+		
+	}
+	
 	public Monster(MatrixLocation2d put, MatrixSize2d size) {
 		this.putting = put;
 		this.spriteSize = size;
