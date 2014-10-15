@@ -172,8 +172,10 @@ public class MainActivity extends SimpleBaseGameActivity implements
 			// Update position for monsters.
 			updateMonstersMoving();
 			
+			
 			// Tower shoot automatically in range
-			for (AnimatedSprite tower : towers) {
+			for (int index = 0; index < towers.size(); index++) {
+				AnimatedSprite tower = towers.get(index);
 				Tower gameTower = game.getTower(tower.getTag());
 				if (gameTower == null) {
 					continue;
@@ -183,7 +185,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 				if (gameTower.target == null) {
 					Monster nearestMonster = game.getNearestMonster(gameTower);
 					if (nearestMonster == null) {
-						return;
+						continue;
 					}
 					gameTower.target = nearestMonster;
 				}
