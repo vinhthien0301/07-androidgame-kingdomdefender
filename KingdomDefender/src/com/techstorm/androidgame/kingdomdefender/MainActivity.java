@@ -1,7 +1,9 @@
 package com.techstorm.androidgame.kingdomdefender;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.handler.IUpdateHandler;
@@ -26,6 +28,7 @@ import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.andengine.opengl.texture.atlas.bitmap.source.AssetBitmapTextureAtlasSource;
+import org.andengine.opengl.texture.region.ITiledTextureRegion;
 import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
@@ -58,6 +61,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 	private Scene scene;
 	private RepeatingSpriteBackground mGrassBackground;
 
+	private Map<String, TiledTextureRegion> textureRegionMap;
 	private BitmapTextureAtlas mBitmapTextureAtlas;
 	private TiledTextureRegion mPlayerTextureRegion;
 
@@ -98,9 +102,22 @@ public class MainActivity extends SimpleBaseGameActivity implements
 
 		this.mBitmapTextureAtlas = new BitmapTextureAtlas(
 				this.getTextureManager(), 128, 128);
+		
 		this.mPlayerTextureRegion = BitmapTextureAtlasTextureRegionFactory
 				.createTiledFromAsset(this.mBitmapTextureAtlas, this,
 						"player.png", 0, 0, 3, 4);
+		
+		this.textureRegionMap = new HashMap<String, TiledTextureRegion>();
+		for (Tower tower : game.shopItems) {
+			BitmapTextureAtlas nBitmapTextureAtlas = new BitmapTextureAtlas(
+					this.getTextureManager(), tower.imageWidth, tower.imageHeight);
+			
+			TiledTextureRegion tiledTextureRegion = BitmapTextureAtlasTextureRegionFactory
+					.createTiledFromAsset(nBitmapTextureAtlas, this,
+							tower.fileName, 0, 0, tower.pTileColumn, tower.pTileRow);
+			this.textureRegionMap.put(createTextureRegionKeyMap(tower, null), tiledTextureRegion);
+			nBitmapTextureAtlas.load();
+		}
 		this.mGrassBackground = new RepeatingSpriteBackground(
 				LayerConvertor.CAMERA_WIDTH, LayerConvertor.CAMERA_HEIGHT,
 				this.getTextureManager(), AssetBitmapTextureAtlasSource.create(
@@ -109,6 +126,21 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		this.mBitmapTextureAtlas.load();
 	}
 
+	private String createTextureRegionKeyMap(Tower tower, Monster monster) {
+		StringBuilder key = new StringBuilder();
+		if (tower != null) {
+			key.append("shop");
+			key.append("-");
+			key.append(tower.number);
+		}
+		if (monster != null) {
+			key.append("monster");
+			key.append("-");
+			key.append(monster.number);
+		}
+		return key.toString();
+	}
+	
 	@Override
 	public Scene onCreateScene() {
 		this.mEngine.registerUpdateHandler(new FPSLogger());
@@ -121,7 +153,6 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		 * Calculate the coordinates for the face, so its centered on the
 		 * camera.
 		 */
-		game.loadLevelData();
 		/* Create the sprite and add it to the scene. */
 		initMonsters(scene);
 		createTower(scene);
@@ -138,15 +169,32 @@ public class MainActivity extends SimpleBaseGameActivity implements
 
 		@Override
 		public void onUpdate(float pSecondsElapsed) {
+			// Update position for monsters.
+			updateMonstersMoving();
+			
 			// Tower shoot automatically in range
 			for (AnimatedSprite tower : towers) {
-				for (AnimatedSprite monster : monsters) {
-					MatrixLocation2d monsterPutting = 
-							LayerConvertor.graphicLocationToMaxtrix2d(new Location2d(monster.getX(), monster.getY()));
-					if (game.canShoot(tower.getTag(), monster.getTag(), monsterPutting)) {
-						createShooter(scene, tower.getTag(), monster.getTag(), tower, monster
-								.getX(), monster.getY());
+				Tower gameTower = game.getTower(tower.getTag());
+				if (gameTower == null) {
+					continue;
+				}
+				
+				// Find a nearest target.
+				if (gameTower.target == null) {
+					Monster nearestMonster = game.getNearestMonster(gameTower);
+					if (nearestMonster == null) {
+						return;
 					}
+					gameTower.target = nearestMonster;
+				}
+				
+
+				Monster monster = gameTower.target;
+				// Shooting target.
+				if (game.canShoot(pSecondsElapsed, gameTower, monster)) {
+					createShooter(scene, gameTower.number, monster.number, tower, LayerConvertor.maxtrixToGraphicLocation2d(monster.putting));
+				} else if (game.isInMonsterList(monster) || !gameTower.isInShootRange(monster)) {
+					gameTower.target = null;
 				}
 			}
 
@@ -154,6 +202,15 @@ public class MainActivity extends SimpleBaseGameActivity implements
 
 	};
 
+	public void updateMonstersMoving() {
+		if (monsters != null && !monsters.isEmpty()) {
+			for (AnimatedSprite monster : monsters) {
+				MatrixLocation2d newMatrixLoc = LayerConvertor.graphicLocationToMaxtrix2d(new Location2d(monster.getX(), monster.getY()));
+				game.updateMonsterMoving(monster.getTag(), newMatrixLoc);
+			}
+		}
+	}
+	
 	@Override
 	public boolean onSceneTouchEvent(Scene pScene,
 			final TouchEvent pSceneTouchEvent) {
@@ -166,12 +223,12 @@ public class MainActivity extends SimpleBaseGameActivity implements
 			Monster monster = game.createMonster(monsterCharacterIndex, LayerConvertor.graphicLocationToMaxtrix2d(
 					new Location2d(pSceneTouchEvent.getX(), pSceneTouchEvent.getY())), 
 					new MatrixSize2d(48, 64));
-			createMonster(scene, monster, game.getMonsterNumber());
+			createMonster(scene, monster, monster.number);
 		}
 		if (pSceneTouchEvent.isActionUp()) {
 			// execute action.
 			if (shopItemDragging != null) {
-				createTowerBought(shopItemDragging.getTag(), 
+				createTowerBought(shopItemDragging.getTiledTextureRegion(), shopItemDragging.getTag(), 
 						shopItemDragging.getX(), shopItemDragging.getY(), 
 						shopItemDragging.getWidth(), shopItemDragging.getHeight());
 				shopItemDragging = null;
@@ -186,14 +243,14 @@ public class MainActivity extends SimpleBaseGameActivity implements
 	// Methods
 	// ===========================================================
 	public void createShooter(final Scene scene, final int towerIndex, final int monsterIndex, 
-			AnimatedSprite tower, float x, float y) {
+			AnimatedSprite tower, Location2d location2d) {
 		
 		final AnimatedSprite sprite = new AnimatedSprite(tower.getX(),
 				tower.getY(), tower.getWidth(), tower.getHeight(),
-				this.mPlayerTextureRegion, this.getVertexBufferObjectManager());
+				tower.getTiledTextureRegion(), this.getVertexBufferObjectManager());
 		final Path path = new Path(2);
 		path.to(tower.getX(), tower.getY());
-		path.to(x, y);
+		path.to(location2d.px, location2d.py);
 
 		sprite.registerEntityModifier(new PathModifier(0.5f, path, null,
 				new IPathModifierListener() {
@@ -312,13 +369,13 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		return sprite;
 	}
 	
-	private AnimatedSprite createTowerBought(int shopItemIndex, float graphicX, float graphicY, float width, float height) {
+	private AnimatedSprite createTowerBought(ITiledTextureRegion tiledTextureRegion, int shopItemIndex, float graphicX, float graphicY, float width, float height) {
 		Location2d location2d = new Location2d(graphicX, graphicY); 
-		game.createTower(shopItemIndex, LayerConvertor.graphicLocationToMaxtrix2d(location2d), width, height);
+		Tower gameTower = game.createTower(shopItemIndex, LayerConvertor.graphicLocationToMaxtrix2d(location2d), width, height);
 		final AnimatedSprite tower = new AnimatedSprite(
-				graphicX, graphicY, width, height, mPlayerTextureRegion,
+				graphicX, graphicY, width, height, tiledTextureRegion,
 				this.getVertexBufferObjectManager());
-		tower.setTag(towers.size());
+		tower.setTag(gameTower.number);
 		towers.add(tower);
 		return tower;
 	}
@@ -338,10 +395,16 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		scene.attachChild(textStroke);
 	}
 	
+	
+	
 	private void createShop(final Scene scene) {
 		float distance = 50f;
 		if (game.getCurrentShop() != null && !game.getCurrentShop().isEmpty()) {
 			for (int index = 0; index < game.getCurrentShop().size(); index++) {
+				final Tower tower = game.getShopItem(index);
+				if (tower == null) {
+					continue;
+				}
 				final AnimatedSprite sprite = new AnimatedSprite(
 						LayerConvertor.CAMERA_WIDTH / 2 + distance,
 						LayerConvertor.CAMERA_HEIGHT
@@ -349,7 +412,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 								- 100,
 						LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE + 50,
 						LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE + 50,
-						this.mPlayerTextureRegion,
+						this.textureRegionMap.get(createTextureRegionKeyMap(tower, null)),
 						this.getVertexBufferObjectManager()) {
 					@Override
 					public boolean onAreaTouched(
@@ -358,7 +421,8 @@ public class MainActivity extends SimpleBaseGameActivity implements
 							final float pTouchAreaLocalY) {
 						if (pSceneTouchEvent.isActionDown()) {
 							if (game.canBuy(this.getTag())) {
-								AnimatedSprite dragShopItem = createShopItemDragging(this.getTag(), 
+								AnimatedSprite dragShopItem = createShopItemDragging(
+										this.getTiledTextureRegion(), this.getTag(), 
 										this.getX(), this.getY(), 
 										this.getWidth(), this.getHeight());
 								shopItemDragging = dragShopItem;
@@ -371,7 +435,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 
 				};
 				sprite.setTag(index);
-				distance += 30;
+				distance += 100;
 				
 				scene.registerTouchArea(sprite);
 				scene.setTouchAreaBindingOnActionDownEnabled(true);
@@ -381,9 +445,9 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		}
 	}
 
-	private AnimatedSprite createShopItemDragging(int shopItemIndex, float graphicX, float graphicY, float width, float height) {
+	private AnimatedSprite createShopItemDragging(ITiledTextureRegion tiledTextureRegion, int shopItemIndex, float graphicX, float graphicY, float width, float height) {
 		final AnimatedSprite shopItem = new AnimatedSprite(
-				graphicX, graphicY, width, height, mPlayerTextureRegion,
+				graphicX, graphicY, width, height, tiledTextureRegion,
 				this.getVertexBufferObjectManager());
 		shopItem.setTag(shopItemIndex);
 		return shopItem;

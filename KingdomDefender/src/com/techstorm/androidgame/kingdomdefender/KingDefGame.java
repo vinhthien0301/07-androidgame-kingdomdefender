@@ -12,13 +12,16 @@ public class KingDefGame {
 	public int levelMapIndex;
 	public List<Tower> shopItems;
 	public List<Monster> monsterCharacter;
-	public Counter monsterNumber;
+	public Counter monsterNumber; // total of monsters include all maps
+	public Counter towerNumber; // total of towers include all maps, except shop items.
 
 	public KingDefGame(Context context) {
 		DatabaseCreator.openDatabase(context);
 		levelMaps = new ArrayList<LevelMap>();
 		levelMapIndex = 0;
 		monsterNumber = new Counter();
+		towerNumber = new Counter();
+		loadLevelData();
 	}
 
 	// Check end game
@@ -34,17 +37,7 @@ public class KingDefGame {
 		monsterCharacter = DatabaseCreator.getMonsterCharacter();
 		DatabaseCreator.getMonster(map, monsterNumber);
 		DatabaseCreator.getMapPath(map);
-		shopItems = DatabaseCreator.getShopItems();
-		
-		
-		// add tower
-		Tower tower = new Tower();
-		tower.putting = new MatrixLocation2d(3, 5);
-		tower.spriteSize = new MatrixSize2d(48, 48);
-		tower.range = 5;
-		tower.buyCost = 3;
-		tower.damage = 10;
-		map.towers.add(tower);
+		shopItems = DatabaseCreator.getShopItems(towerNumber);
 		
 		levelMaps.add(map);
 		// init money for testing
@@ -55,12 +48,19 @@ public class KingDefGame {
 		return monsterNumber.getNumber();
 	}
 	
-	public void createTower(int shopItemIndex, MatrixLocation2d matrixLoc2d, float width, float height) {
+	public int getTowerNumber() {
+		return towerNumber.getNumber();
+	}
+	
+	public Tower createTower(int shopItemIndex, MatrixLocation2d matrixLoc2d, float width, float height) {
 		Tower tower = cloneTower(shopItems.get(shopItemIndex));
+		tower.number = towerNumber.getNumber();
 		tower.putting = matrixLoc2d;
 		tower.spriteSize = new MatrixSize2d(width, height);
 		levelMaps.get(levelMapIndex).getCurrentTowers().add(tower);
 		levelMaps.get(levelMapIndex).subsMoney(tower.buyCost);
+		towerNumber.increase(1);
+		return tower;
 	}
 	
 	private Tower cloneTower(Tower tower) {
@@ -75,6 +75,11 @@ public class KingDefGame {
 		cloneTower.range = tower.range;
 		cloneTower.sellCost = tower.sellCost;
 		cloneTower.spriteSize = tower.spriteSize;
+		cloneTower.fileName = tower.fileName;
+		cloneTower.imageWidth = tower.imageWidth;
+		cloneTower.imageHeight = tower.imageHeight;
+		cloneTower.pTileColumn = tower.pTileColumn;
+		cloneTower.pTileRow = tower.pTileRow;
 		return cloneTower;
 	}
 	
@@ -111,21 +116,29 @@ public class KingDefGame {
 		if (getCurrentMonsters() == null || getCurrentMonsters().isEmpty()) {
 			return Monster.DEAD;
 		}
-		Monster monster = getMonster(monsterNumber.getNumber());
+		Monster monster = getMonster(monsterIndex);
 		if (monster == null) {
 			return Monster.DEAD;
 		}
 		monster.hp -= calcHpDamaged(towerIndex, monsterIndex);
 		if (monster.hp <= 0) {
 			levelMaps.get(levelMapIndex).getCurrentMonsters().remove(monster);
+			Tower tower = getTower(towerIndex);
+			if (tower != null) {
+				tower.target = null;
+			}
 			return Monster.DEAD;
 		}
 		return Monster.LIVE;
 	}
 	
 	public int calcHpDamaged(int towerIndex, int monsterIndex) {
-		Tower tower = getCurrentTowers().get(towerIndex);
+		Tower tower = getTower(towerIndex);
 		return tower.damage;
+	}
+	
+	public boolean isInMonsterList(Monster monster) {
+		return getMonster(monster.number) != null;
 	}
 	
 	public Monster getMonster(int monsterNumber) {
@@ -134,32 +147,65 @@ public class KingDefGame {
 			for (Monster monsterItem : getCurrentMonsters()) {
 				if (monsterItem.number == monsterNumber) {
 					monster = monsterItem;
+					break;
 				}
 			}
 		}
 		return monster;
 	}
 	
-	public boolean canShoot(int towerIndex, int monsterIndex, MatrixLocation2d monsterPutting) {
-		if (getCurrentTowers() == null || getCurrentTowers().isEmpty()) {
+	public Tower getShopItem(int towerNumber) {
+		Tower tower = null;
+		if (getCurrentShop() != null && !getCurrentShop().isEmpty()) {
+			for (Tower towerItem : getCurrentShop()) {
+				if (towerItem.number == towerNumber) {
+					tower = towerItem;
+					break;
+				}
+			}
+		}
+		return tower;
+	}
+	
+	public Tower getTower(int towerNumber) {
+		Tower tower = null;
+		if (getCurrentTowers() != null && !getCurrentTowers().isEmpty()) {
+			for (Tower towerItem : getCurrentTowers()) {
+				if (towerItem.number == towerNumber) {
+					tower = towerItem;
+					break;
+				}
+			}
+		}
+		return tower;
+	}
+	
+	public boolean canShoot(float pSecondsElapsed, int towerNumber, int monsterNumber) {
+		Tower tower = this.getTower(towerNumber);
+		Monster monster = this.getMonster(monsterNumber);
+		return canShoot(pSecondsElapsed, tower, monster);
+	}
+
+	public boolean canShoot(float pSecondsElapsed, Tower tower, Monster monster) {
+		if (tower == null) {
 			return false;
 		}
-		if (getCurrentMonsters() == null || getCurrentMonsters().isEmpty()) {
-			return false;
-		}
-		Tower tower = getCurrentTowers().get(towerIndex);
-		Monster monster = getMonster(monsterIndex);
 		if (monster == null) {
 			return false;
 		}
-		monster.putting = monsterPutting;
+		tower.attackTimeWait += pSecondsElapsed;
+		if (tower.attackTimeWait < tower.attackSpeed) {
+			return false;
+		}
+		tower.attackTimeWait = 0;
+		
 		if (Math.abs(monster.putting.columnIndex - tower.putting.columnIndex) <= tower.range
 				&& Math.abs(monster.putting.rowIndex - tower.putting.rowIndex) <= tower.range) {
 			return true;
 		}
 		return false;
 	}
-
+	
 	public boolean canBuy(int shopItemIndex) {
 		Tower shopItem = shopItems.get(shopItemIndex);
 		if (levelMaps.get(levelMapIndex).getMoney() >= shopItem.buyCost) {
@@ -173,10 +219,11 @@ public class KingDefGame {
 			return null;
 		}
 		Monster monster = cloneMonster(monsterCharacter.get(monsterCharacterIndex));
+		monster.number = monsterNumber.getNumber();
 		monster.putting = matrixLoc2d;
 		monster.spriteSize = matrixSize2d;
-		monster.number = monsterNumber.getNumber();
 		levelMaps.get(levelMapIndex).getCurrentMonsters().add(monster);
+		monsterNumber.increase(1);
 		return monster;
 	}
 	
@@ -190,6 +237,29 @@ public class KingDefGame {
 		cloneMonster.rewardCost = monster.rewardCost;
 		cloneMonster.spriteSize = monster.spriteSize;
 		return cloneMonster;
+	}
+
+	public Monster getNearestMonster(Tower tower) {
+		float nearestDistance = Float.MAX_VALUE;
+		Monster nearestMonster = null;
+		for (Monster monster : getCurrentMonsters()) {
+			if (tower.isInShootRange(monster)) {
+				float distance = tower.distance(monster);
+				if (distance < nearestDistance) {
+					nearestDistance = distance;
+					nearestMonster = monster;
+				}
+			}
+		}
+		return nearestMonster;
+	}
+
+	public void updateMonsterMoving(int monsterNumber, MatrixLocation2d newPosition) {
+		Monster monster = getMonster(monsterNumber);
+		if (monster == null) {
+			return;
+		}
+		monster.putting = newPosition;
 	}
 	
 }

@@ -120,7 +120,7 @@ public class DatabaseCreator {
     	
 	}
 	
-	public static List<Tower> getShopItems() {
+	public static List<Tower> getShopItems(Counter towerNumber) {
 		// new shop item list
 		List<Tower> shopItems = new ArrayList<Tower>();
 		
@@ -136,9 +136,19 @@ public class DatabaseCreator {
     				tower.areaOfEffect = cur.getInt(cur.getColumnIndex("K_AREA_OF_EFFECT"));
 //    				tower.attackEffect = cur.getInt(cur.getColumnIndex("K_AREA_OF_EFFECT"));
     				tower.range = cur.getInt(cur.getColumnIndex("K_RANGE"));
-    				tower.attackSpeed = cur.getDouble(cur.getColumnIndex("K_ATTACK_SPEED"));
+    				tower.attackSpeed = cur.getFloat(cur.getColumnIndex("K_ATTACK_SPEED"));
+    				tower.attackTimeWait = tower.attackSpeed;
     				tower.buyCost = cur.getInt(cur.getColumnIndex("K_BUY_COST"));
     				tower.sellCost = cur.getInt(cur.getColumnIndex("K_SELL_COST"));
+    				tower.fileName = cur.getString(cur.getColumnIndex("K_SPRITE_FILE_NAME"));
+    				tower.imageWidth = cur.getInt(cur.getColumnIndex("K_SPRITE_IMAGE_WIDTH"));
+    				tower.imageHeight = cur.getInt(cur.getColumnIndex("K_SPRITE_IMAGE_HEIGHT"));
+    				tower.pTileColumn = cur.getInt(cur.getColumnIndex("K_SPRITE_PTILE_COLUMN"));
+    				tower.pTileRow = cur.getInt(cur.getColumnIndex("K_SPRITE_PTILE_ROW"));
+    				
+    				tower.number = towerNumber.getNumber();
+    				towerNumber.increase(1);
+    				
     				shopItems.add(tower);
     			}while (cur.moveToNext()); //Move to next row
     		}
@@ -170,6 +180,7 @@ public class DatabaseCreator {
 		monsterCharacter.rewardCost = cur.getInt(cur.getColumnIndex("K_REWARD"));
 		monsterCharacter.hp = cur.getInt(cur.getColumnIndex("K_HP"));
 		monsterCharacter.name = cur.getString(cur.getColumnIndex("K_NAME"));
+		monsterCharacter.fileName = cur.getString(cur.getColumnIndex("K_SPRITE_FILE_NAME"));
 	}
 	
 }

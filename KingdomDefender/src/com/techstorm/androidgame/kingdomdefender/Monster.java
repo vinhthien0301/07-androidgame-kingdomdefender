@@ -9,6 +9,10 @@ public class Monster {
 	
 	public int number;
 	
+	public Integer life;
+	
+	public String fileName;
+	
 	public MatrixLocation2d putting;
 	
 	public MatrixSize2d spriteSize;
@@ -28,12 +32,13 @@ public class Monster {
 	public double rewardCost;
 
 	public Monster() {
-		
+		life = LIVE;
 	}
 	
 	public Monster(MatrixLocation2d put, MatrixSize2d size) {
 		this.putting = put;
 		this.spriteSize = size;
+		life = LIVE;
 	}
 	
 	
