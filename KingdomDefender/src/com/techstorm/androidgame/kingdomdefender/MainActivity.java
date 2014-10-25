@@ -59,12 +59,14 @@ public class MainActivity extends SimpleBaseGameActivity implements
 	private Text textStroke;
 
 	private Scene scene;
+	private Scene scene1;
 	private RepeatingSpriteBackground mGrassBackground;
 
 	private Map<String, TiledTextureRegion> textureRegionMap;
 	private BitmapTextureAtlas mBitmapTextureAtlas;
 	private TiledTextureRegion mPlayerTextureRegion;
-
+	private BitmapTextureAtlas mHpTextureAtlas;
+	private TiledTextureRegion mHpTextureRegion;
 	// ===========================================================
 	// Constructors
 	// ===========================================================
@@ -107,6 +109,13 @@ public class MainActivity extends SimpleBaseGameActivity implements
 				.createTiledFromAsset(this.mBitmapTextureAtlas, this,
 						"player.png", 0, 0, 3, 4);
 		
+		this.mHpTextureAtlas = new BitmapTextureAtlas(
+				this.getTextureManager(), 200, 50);
+		
+		this.mHpTextureRegion = BitmapTextureAtlasTextureRegionFactory
+				.createTiledFromAsset(this.mHpTextureAtlas, this,
+						"menu_background.png", 0, 0, 1, 1);
+		this.mHpTextureAtlas.load();
 		this.textureRegionMap = new HashMap<String, TiledTextureRegion>();
 		for (Tower tower : game.shopItems) {
 			BitmapTextureAtlas nBitmapTextureAtlas = new BitmapTextureAtlas(
@@ -124,6 +133,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 						this.getAssets(), "gfx/background_grass.png"),
 				this.getVertexBufferObjectManager());
 		this.mBitmapTextureAtlas.load();
+		
 	}
 
 	private String createTextureRegionKeyMap(Tower tower, Monster monster) {
@@ -203,6 +213,8 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		}
 
 	};
+
+	private AnimatedSprite sprite1;
 
 	public void updateMonstersMoving() {
 		if (monsters != null && !monsters.isEmpty()) {
@@ -300,13 +312,18 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		scene.attachChild(sprite);
 	}
 
-	private AnimatedSprite createMonster(Scene scene, Monster monster, int tagIndex) {
+	private AnimatedSprite createMonster(Scene scene, Monster monster, int tagIndex ) {
 		final AnimatedSprite sprite = new AnimatedSprite(
 				monster.putting.columnIndex, monster.putting.rowIndex,
 				monster.spriteSize.width, monster.spriteSize.height,
 				this.mPlayerTextureRegion,
 				this.getVertexBufferObjectManager());
-
+		
+	  final AnimatedSprite	sprite1 = new AnimatedSprite(
+				monster.putting.columnIndex, monster.putting.rowIndex,
+				monster.spriteSize1.width, 10,
+				this.mHpTextureRegion,
+				this.getVertexBufferObjectManager());
 		MatrixLocation2d[] locs = game.getCurrentMonsterPath();
 		final Path path = new Path(locs.length);
 		for (MatrixLocation2d point : locs) {
@@ -314,26 +331,38 @@ public class MainActivity extends SimpleBaseGameActivity implements
 					.maxtrixToGraphicLocation2d(point);
 			path.to(locat2d.px, locat2d.py);
 		}
-
+		
+		final Path path1 = new Path(locs.length);
+		for (MatrixLocation2d point : locs) {
+			Location2d locat2d = LayerConvertor
+					.maxtrixToGraphicLocation2d(point);
+			path1.to(locat2d.px, locat2d.py);
+		}
+		
 		sprite.registerEntityModifier(new LoopEntityModifier(
 				new PathModifier(30, path, null,
 						new IPathModifierListener() {
 							@Override
 							public void onPathStarted(
 									final PathModifier pPathModifier,
-									final IEntity pEntity) {
-
+									final IEntity pEntity)
+							
+							{
+								
 							}
-
+       
 							@Override
 							public void onPathWaypointStarted(
 									final PathModifier pPathModifier,
 									final IEntity pEntity,
 									final int pWaypointIndex) {
+								
 								switch (pWaypointIndex) {
 								case 0:
+									
 									sprite.animate(new long[] { 200, 200,
 											200 }, 6, 8, true);
+									
 									break;
 								case 1:
 									sprite.animate(new long[] { 200, 200,
@@ -349,7 +378,10 @@ public class MainActivity extends SimpleBaseGameActivity implements
 									break;
 								}
 							}
+							
 
+							
+							
 							@Override
 							public void onPathWaypointFinished(
 									final PathModifier pPathModifier,
@@ -357,7 +389,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 									final int pWaypointIndex) {
 
 							}
-
+							
 							@Override
 							public void onPathFinished(
 									final PathModifier pPathModifier,
@@ -365,10 +397,55 @@ public class MainActivity extends SimpleBaseGameActivity implements
 
 							}
 						})));
+		sprite1.registerEntityModifier(new LoopEntityModifier(
+				new PathModifier(30, path1, null,
+						new IPathModifierListener() {
+							@Override
+							public void onPathStarted(
+									final PathModifier pPathModifier,
+									final IEntity pEntity)
+							
+							{
+								
+							}
+       
+							@Override
+							public void onPathWaypointStarted(
+									final PathModifier pPathModifier,
+									final IEntity pEntity,
+									final int pWaypointIndex) {
+								
+							
+							
+							}
+							
+							
+							@Override
+							public void onPathWaypointFinished(
+									final PathModifier pPathModifier,
+									final IEntity pEntity,
+									final int pWaypointIndex) {
+
+							}
+							
+							@Override
+							public void onPathFinished(
+									final PathModifier pPathModifier,
+									final IEntity pEntity) {
+
+							}
+						})));
+		scene.attachChild(sprite1);
 		scene.attachChild(sprite);
 		monsters.add(sprite);
+		monsters.add(sprite1);
 		sprite.setTag(tagIndex);
+		sprite1.setTag(tagIndex);
 		return sprite;
+	
+		
+		
+		
 	}
 	
 	private AnimatedSprite createTowerBought(ITiledTextureRegion tiledTextureRegion, int shopItemIndex, float graphicX, float graphicY, float width, float height) {
@@ -480,6 +557,15 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		}
 		return null;
 	}
+
+	public Scene getScene1() {
+		return scene1;
+	}
+
+	public void setScene1(Scene scene1) {
+		this.scene1 = scene1;
+	}
+
 	
 	// ===========================================================
 	// Inner and Anonymous Classes
