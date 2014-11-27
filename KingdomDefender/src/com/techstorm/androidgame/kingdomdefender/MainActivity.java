@@ -16,6 +16,8 @@ import org.andengine.entity.modifier.PathModifier;
 import org.andengine.entity.modifier.PathModifier.IPathModifierListener;
 import org.andengine.entity.modifier.PathModifier.Path;
 import org.andengine.entity.primitive.Line;
+import org.andengine.entity.primitive.Rectangle;
+import org.andengine.entity.primitive.Rectangle;
 import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.RepeatingSpriteBackground;
@@ -58,7 +60,9 @@ public class MainActivity extends SimpleBaseGameActivity implements
 	private List<AnimatedSprite> shopItems;
 	private AnimatedSprite shopItemDragging;
 	private Text textStroke;
-
+	private Rectangle itemCover;
+	private int column;
+	private int row;
 	private Scene scene;
 	private RepeatingSpriteBackground mGrassBackground;
 
@@ -178,7 +182,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		int numberOfColumnLines = LayerConvertor.CAMERA_WIDTH / LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE + 1;
 		int numberOfRowLines = LayerConvertor.CAMERA_HEIGHT / LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE + 1;		
 		for (int columnIndex = 0; columnIndex < numberOfColumnLines; columnIndex++) {
-			float columnPosition = columnIndex * LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE;
+			float columnPosition = columnIndex * LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE;
 			final Line line = new Line(columnPosition, 0, columnPosition, LayerConvertor.CAMERA_HEIGHT, this.getVertexBufferObjectManager());
 			scene.attachChild(line);
 		}
@@ -187,6 +191,8 @@ public class MainActivity extends SimpleBaseGameActivity implements
 			final Line line = new Line(0, rowPosition, LayerConvertor.CAMERA_WIDTH, rowPosition, this.getVertexBufferObjectManager());
 			scene.attachChild(line);
 		}
+		
+		
 	}
 
 	IUpdateHandler loop = new IUpdateHandler() {
@@ -247,6 +253,14 @@ public class MainActivity extends SimpleBaseGameActivity implements
 			shopItemDragging.setPosition(pSceneTouchEvent.getX()
 					- shopItemDragging.getWidth() / 2, pSceneTouchEvent.getY()
 					- shopItemDragging.getHeight() / 2);
+			float currentX = pSceneTouchEvent.getX()
+					- shopItemDragging.getWidth() / 2;
+			float currentY = pSceneTouchEvent.getY()
+					- shopItemDragging.getHeight() / 2;
+			MatrixLocation2d locat = new MatrixLocation2d((int)currentX/LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE, (int)currentY/LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE);
+			Location2d graLocat = LayerConvertor.maxtrixToGraphicLocation2d(locat);
+			itemCover.setPosition(graLocat.px, graLocat.py);
+			
 		} else {
 			int monsterCharacterIndex = 0;
 			Monster monster = game.createMonster(monsterCharacterIndex, LayerConvertor.graphicLocationToMaxtrix2d(
@@ -519,6 +533,8 @@ public class MainActivity extends SimpleBaseGameActivity implements
 										this.getTiledTextureRegion(), this.getTag(), 
 										this.getX(), this.getY(), 
 										this.getWidth(), this.getHeight());
+								itemCover = new Rectangle(pSceneTouchEvent.getX(),pSceneTouchEvent.getY() , this.getWidth(), this.getHeight(), this.getVertexBufferObjectManager());
+								scene.attachChild(itemCover);
 								shopItemDragging = dragShopItem;
 								scene.attachChild(dragShopItem);
 							}
