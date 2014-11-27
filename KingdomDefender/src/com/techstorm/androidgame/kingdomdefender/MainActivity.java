@@ -15,6 +15,7 @@ import org.andengine.entity.modifier.LoopEntityModifier;
 import org.andengine.entity.modifier.PathModifier;
 import org.andengine.entity.modifier.PathModifier.IPathModifierListener;
 import org.andengine.entity.modifier.PathModifier.Path;
+import org.andengine.entity.primitive.Line;
 import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.RepeatingSpriteBackground;
@@ -59,7 +60,6 @@ public class MainActivity extends SimpleBaseGameActivity implements
 	private Text textStroke;
 
 	private Scene scene;
-	private Scene scene1;
 	private RepeatingSpriteBackground mGrassBackground;
 
 	private Map<String, TiledTextureRegion> textureRegionMap;
@@ -164,12 +164,29 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		 * camera.
 		 */
 		/* Create the sprite and add it to the scene. */
+		createSquare(scene);
 		initMonsters(scene);
 		createTower(scene);
 		createShop(scene);
 		createInformationBar(scene);
 
 		return scene;
+	}
+
+	private void createSquare(Scene scene) {
+//		final Line line = new Line(x1, y1, x2, y2, lineWidth);
+		int numberOfColumnLines = LayerConvertor.CAMERA_WIDTH / LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE + 1;
+		int numberOfRowLines = LayerConvertor.CAMERA_HEIGHT / LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE + 1;		
+		for (int columnIndex = 0; columnIndex < numberOfColumnLines; columnIndex++) {
+			float columnPosition = columnIndex * LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE;
+			final Line line = new Line(columnPosition, 0, columnPosition, LayerConvertor.CAMERA_HEIGHT, this.getVertexBufferObjectManager());
+			scene.attachChild(line);
+		}
+		for (int rowIndex = 0; rowIndex < numberOfRowLines; rowIndex++) {
+			float rowPosition = rowIndex * LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE;
+			final Line line = new Line(0, rowPosition, LayerConvertor.CAMERA_WIDTH, rowPosition, this.getVertexBufferObjectManager());
+			scene.attachChild(line);
+		}
 	}
 
 	IUpdateHandler loop = new IUpdateHandler() {
@@ -213,8 +230,6 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		}
 
 	};
-
-	private AnimatedSprite sprite1;
 
 	public void updateMonstersMoving() {
 		if (monsters != null && !monsters.isEmpty()) {
@@ -321,7 +336,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		
 	  final AnimatedSprite	sprite1 = new AnimatedSprite(
 				monster.putting.columnIndex, monster.putting.rowIndex,
-				monster.spriteSize1.width, 10,
+				monster.spriteSize.width, 10,
 				this.mHpTextureRegion,
 				this.getVertexBufferObjectManager());
 		MatrixLocation2d[] locs = game.getCurrentMonsterPath();
@@ -557,15 +572,6 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		}
 		return null;
 	}
-
-	public Scene getScene1() {
-		return scene1;
-	}
-
-	public void setScene1(Scene scene1) {
-		this.scene1 = scene1;
-	}
-
 	
 	// ===========================================================
 	// Inner and Anonymous Classes
