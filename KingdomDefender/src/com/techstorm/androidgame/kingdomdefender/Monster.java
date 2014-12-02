@@ -15,7 +15,9 @@ public class Monster {
 	
 	public MatrixLocation2d putting;
 	
-	public MatrixSize2d spriteSize;
+	public Size2d spriteSize;
+	
+	public MatrixSize2d matrixSize;
 	
 	public String name;
 	
@@ -35,7 +37,7 @@ public class Monster {
 		life = LIVE;
 	}
 	
-	public Monster(MatrixLocation2d put, MatrixSize2d size) {
+	public Monster(MatrixLocation2d put, Size2d size) {
 		this.putting = put;
 		this.spriteSize = size;
 		life = LIVE;

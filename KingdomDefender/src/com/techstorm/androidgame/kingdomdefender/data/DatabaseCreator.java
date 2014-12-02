@@ -15,6 +15,7 @@ import com.techstorm.androidgame.kingdomdefender.LevelMap;
 import com.techstorm.androidgame.kingdomdefender.MatrixLocation2d;
 import com.techstorm.androidgame.kingdomdefender.MatrixSize2d;
 import com.techstorm.androidgame.kingdomdefender.Monster;
+import com.techstorm.androidgame.kingdomdefender.Size2d;
 import com.techstorm.androidgame.kingdomdefender.Tower;
 import com.techstorm.androidgame.kingdomdefender.Wave;
 import com.techstorm.sqlite.SqliteExecutor;
@@ -94,7 +95,7 @@ public class DatabaseCreator {
     			do {
     				final int centerX = (int)(LayerConvertor.CAMERA_WIDTH - 24) / 2;
     				final int centerY = (int)(LayerConvertor.CAMERA_HEIGHT - 32) / 2;
-    				Monster monster = new Monster(new MatrixLocation2d(centerX, centerY), new MatrixSize2d(48, 64));
+    				Monster monster = new Monster(new MatrixLocation2d(centerX, centerY), new Size2d(48, 64));
     				characterId = c.getInt(c.getColumnIndex("K_CHARACTER"));
     				int waveIndex = c.getInt(c.getColumnIndex("K_WAVE"));
     				Wave wave = map.waves.get(waveIndex - 1);
@@ -145,6 +146,9 @@ public class DatabaseCreator {
     				tower.imageHeight = cur.getInt(cur.getColumnIndex("K_SPRITE_IMAGE_HEIGHT"));
     				tower.pTileColumn = cur.getInt(cur.getColumnIndex("K_SPRITE_PTILE_COLUMN"));
     				tower.pTileRow = cur.getInt(cur.getColumnIndex("K_SPRITE_PTILE_ROW"));
+    				int matrixWidth = cur.getInt(cur.getColumnIndex("K_MATRIX_WIDTH"));
+    				int matrixHeight = cur.getInt(cur.getColumnIndex("K_MATRIX_HEIGHT"));
+    				tower.matrixSize = new MatrixSize2d(matrixWidth, matrixHeight);
     				
     				tower.number = towerNumber.getNumber();
     				towerNumber.increase(1);
@@ -181,6 +185,9 @@ public class DatabaseCreator {
 		monsterCharacter.hp = cur.getInt(cur.getColumnIndex("K_HP"));
 		monsterCharacter.name = cur.getString(cur.getColumnIndex("K_NAME"));
 		monsterCharacter.fileName = cur.getString(cur.getColumnIndex("K_SPRITE_FILE_NAME"));
+		int matrixWidth = cur.getInt(cur.getColumnIndex("K_MATRIX_WIDTH"));
+		int matrixHeight = cur.getInt(cur.getColumnIndex("K_MATRIX_HEIGHT"));
+		monsterCharacter.matrixSize = new MatrixSize2d(matrixWidth, matrixHeight);
 	}
 	
 }

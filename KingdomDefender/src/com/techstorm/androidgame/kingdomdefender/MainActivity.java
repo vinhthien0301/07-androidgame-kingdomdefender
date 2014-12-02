@@ -265,7 +265,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 			int monsterCharacterIndex = 0;
 			Monster monster = game.createMonster(monsterCharacterIndex, LayerConvertor.graphicLocationToMaxtrix2d(
 					new Location2d(pSceneTouchEvent.getX(), pSceneTouchEvent.getY())), 
-					new MatrixSize2d(48, 64));
+					new Size2d(48, 64));
 			createMonster(scene, monster, monster.number);
 		}
 		if (pSceneTouchEvent.isActionUp()) {

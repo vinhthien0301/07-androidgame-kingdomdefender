@@ -1,15 +1,15 @@
 package com.techstorm.androidgame.kingdomdefender;
 
-public class MatrixSize2d {
-	public int width;
-	public int height;
+public class Size2d {
+	public float width;
+	public float height;
 	
-	public MatrixSize2d() {
+	public Size2d() {
 		this.width = 0;
 		this.height = 0;
 	}
 	
-	public MatrixSize2d(int width, int height) {
+	public Size2d(float width, float height) {
 		this.width = width;
 		this.height = height;
 	}

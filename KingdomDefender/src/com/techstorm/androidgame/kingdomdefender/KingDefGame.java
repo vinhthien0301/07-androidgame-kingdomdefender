@@ -56,7 +56,7 @@ public class KingDefGame {
 		Tower tower = cloneTower(shopItems.get(shopItemIndex));
 		tower.number = towerNumber.getNumber();
 		tower.putting = matrixLoc2d;
-		tower.spriteSize = new MatrixSize2d(width, height);
+		tower.spriteSize = new Size2d(width, height);
 		levelMaps.get(levelMapIndex).getCurrentTowers().add(tower);
 		levelMaps.get(levelMapIndex).subsMoney(tower.buyCost);
 		towerNumber.increase(1);
@@ -75,6 +75,7 @@ public class KingDefGame {
 		cloneTower.range = tower.range;
 		cloneTower.sellCost = tower.sellCost;
 		cloneTower.spriteSize = tower.spriteSize;
+		cloneTower.matrixSize = tower.matrixSize;
 		cloneTower.fileName = tower.fileName;
 		cloneTower.imageWidth = tower.imageWidth;
 		cloneTower.imageHeight = tower.imageHeight;
@@ -214,14 +215,14 @@ public class KingDefGame {
 		return false;
 	}
 	
-	public Monster createMonster(int monsterCharacterIndex, MatrixLocation2d matrixLoc2d, MatrixSize2d matrixSize2d) {
+	public Monster createMonster(int monsterCharacterIndex, MatrixLocation2d matrixLoc2d, Size2d size2d) {
 		if (monsterCharacter == null || monsterCharacter.isEmpty()) {
 			return null;
 		}
 		Monster monster = cloneMonster(monsterCharacter.get(monsterCharacterIndex));
 		monster.number = monsterNumber.getNumber();
 		monster.putting = matrixLoc2d;
-		monster.spriteSize = matrixSize2d;
+		monster.spriteSize = size2d;
 		levelMaps.get(levelMapIndex).getCurrentMonsters().add(monster);
 		monsterNumber.increase(1);
 		return monster;
@@ -236,6 +237,7 @@ public class KingDefGame {
 		cloneMonster.putting = monster.putting;
 		cloneMonster.rewardCost = monster.rewardCost;
 		cloneMonster.spriteSize = monster.spriteSize;
+		cloneMonster.matrixSize = monster.matrixSize;
 		return cloneMonster;
 	}
 

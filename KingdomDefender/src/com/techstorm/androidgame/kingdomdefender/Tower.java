@@ -12,7 +12,8 @@ public class Tower {
 	
 	// DB-
 	public MatrixLocation2d putting;
-	public MatrixSize2d spriteSize;
+	public Size2d spriteSize;
+	public MatrixSize2d matrixSize;
 	public String fileName;
 	public int imageWidth;
 	public int imageHeight;
