@@ -24,6 +24,10 @@ public class KingDefGame {
 		loadLevelData();
 	}
 
+	public void resetMonsterPaths() {
+		
+	}
+	
 	// Check end game
 	public Integer endgame() {
 		return 0;

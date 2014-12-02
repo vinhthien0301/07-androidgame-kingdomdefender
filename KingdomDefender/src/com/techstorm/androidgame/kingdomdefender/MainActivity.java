@@ -47,6 +47,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 	// ===========================================================
 
 	private static final int FONT_SIZE = 48;
+	private static final int MAX_TIME = 60;
 	
 	// ===========================================================
 	// Fields
@@ -341,7 +342,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		scene.attachChild(sprite);
 	}
 
-	private AnimatedSprite createMonster(Scene scene, Monster monster, int tagIndex ) {
+	private AnimatedSprite createMonster(final Scene scene, Monster monster, int tagIndex ) {
 		final AnimatedSprite sprite = new AnimatedSprite(
 				monster.putting.columnIndex, monster.putting.rowIndex,
 				monster.spriteSize.width, monster.spriteSize.height,
@@ -368,8 +369,8 @@ public class MainActivity extends SimpleBaseGameActivity implements
 			path1.to(locat2d.px, locat2d.py);
 		}
 		
-		sprite.registerEntityModifier(new LoopEntityModifier(
-				new PathModifier(30, path, null,
+		sprite.registerEntityModifier(
+				new PathModifier(MAX_TIME / monster.moveSpeed, path, null,
 						new IPathModifierListener() {
 							@Override
 							public void onPathStarted(
@@ -388,20 +389,23 @@ public class MainActivity extends SimpleBaseGameActivity implements
 								
 								switch (pWaypointIndex) {
 								case 0:
-									
+									// move down
 									sprite.animate(new long[] { 200, 200,
 											200 }, 6, 8, true);
 									
 									break;
 								case 1:
+									// move right
 									sprite.animate(new long[] { 200, 200,
 											200 }, 3, 5, true);
 									break;
 								case 2:
+									// move up
 									sprite.animate(new long[] { 200, 200,
 											200 }, 0, 2, true);
 									break;
 								case 3:
+									// move left
 									sprite.animate(new long[] { 200, 200,
 											200 }, 9, 11, true);
 									break;
@@ -416,18 +420,25 @@ public class MainActivity extends SimpleBaseGameActivity implements
 									final PathModifier pPathModifier,
 									final IEntity pEntity,
 									final int pWaypointIndex) {
-
+								
 							}
 							
 							@Override
 							public void onPathFinished(
 									final PathModifier pPathModifier,
 									final IEntity pEntity) {
-
+								mEngine.runOnUpdateThread(new Runnable() {
+									@Override
+									public void run() {
+										monsters.remove(sprite);
+										scene.detachChild(sprite);
+									}
+								});
 							}
-						})));
+						}));
+		
 		sprite1.registerEntityModifier(new LoopEntityModifier(
-				new PathModifier(30, path1, null,
+				new PathModifier(MAX_TIME / monster.moveSpeed, path1, null,
 						new IPathModifierListener() {
 							@Override
 							public void onPathStarted(

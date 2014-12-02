@@ -13,6 +13,8 @@ public class Monster {
 	
 	public String fileName;
 	
+	public Integer moveSpeed;
+	
 	public MatrixLocation2d putting;
 	
 	public Size2d spriteSize;

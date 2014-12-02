@@ -98,6 +98,7 @@ public class DatabaseCreator {
     				Monster monster = new Monster(new MatrixLocation2d(centerX, centerY), new Size2d(48, 64));
     				characterId = c.getInt(c.getColumnIndex("K_CHARACTER"));
     				int waveIndex = c.getInt(c.getColumnIndex("K_WAVE"));
+    				monster.moveSpeed = c.getInt(c.getColumnIndex("K_MOVE_SPEED"));
     				Wave wave = map.waves.get(waveIndex - 1);
     				wave.addMonster(monster);
     				
@@ -188,6 +189,7 @@ public class DatabaseCreator {
 		int matrixWidth = cur.getInt(cur.getColumnIndex("K_MATRIX_WIDTH"));
 		int matrixHeight = cur.getInt(cur.getColumnIndex("K_MATRIX_HEIGHT"));
 		monsterCharacter.matrixSize = new MatrixSize2d(matrixWidth, matrixHeight);
+		
 	}
 	
 }
