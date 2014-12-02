@@ -11,12 +11,10 @@ import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
 import org.andengine.entity.IEntity;
-import org.andengine.entity.modifier.LoopEntityModifier;
 import org.andengine.entity.modifier.PathModifier;
 import org.andengine.entity.modifier.PathModifier.IPathModifierListener;
 import org.andengine.entity.modifier.PathModifier.Path;
 import org.andengine.entity.primitive.Line;
-import org.andengine.entity.primitive.Rectangle;
 import org.andengine.entity.primitive.Rectangle;
 import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.Scene;
@@ -38,7 +36,6 @@ import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.util.color.Color;
 
 import android.graphics.Typeface;
-import android.provider.SyncStateContract.Helpers;
 
 public class MainActivity extends SimpleBaseGameActivity implements
 		IOnSceneTouchListener {
@@ -255,9 +252,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 	public boolean onSceneTouchEvent(Scene pScene,
 			final TouchEvent pSceneTouchEvent) {
 		if (shopItemDragging != null) {
-			shopItemDragging.setPosition(pSceneTouchEvent.getX()
-					- shopItemDragging.getWidth() / 2, pSceneTouchEvent.getY()
-					- shopItemDragging.getHeight() / 2);
+			
 			float currentX = pSceneTouchEvent.getX()
 					- shopItemDragging.getWidth() / 2;
 			float currentY = pSceneTouchEvent.getY()
@@ -265,7 +260,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 			MatrixLocation2d locat = new MatrixLocation2d((int)currentX/LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE, (int)currentY/LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE);
 			Location2d graLocat = LayerConvertor.maxtrixToGraphicLocation2d(locat);
 			itemCover.setPosition(graLocat.px, graLocat.py);
-			
+			shopItemDragging.setPosition(graLocat.px, graLocat.py);
 		} else {
 //			int monsterCharacterIndex = 0;
 //			Monster monster = game.createMonster(monsterCharacterIndex, LayerConvertor.graphicLocationToMaxtrix2d(
@@ -558,8 +553,8 @@ public class MainActivity extends SimpleBaseGameActivity implements
 						LayerConvertor.CAMERA_HEIGHT
 								- LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE
 								- 100,
-						LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE + 50,
-						LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE + 50,
+						LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE * tower.matrixSize.width,
+						LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE * tower.matrixSize.height,
 						this.textureRegionMap.get(createTextureRegionKeyMap(tower, null)),
 						this.getVertexBufferObjectManager()) {
 					@Override
