@@ -7,6 +7,10 @@ public class Monster {
 	public static final Integer DEAD = Integer.valueOf(0);
 	public static final Integer LIVE = Integer.valueOf(1);
 	
+	public static final Integer GREEN_LIFE = Integer.valueOf(0);
+	public static final Integer YELLOW_LIFE = Integer.valueOf(1);
+	public static final Integer RED_LIFE = Integer.valueOf(2);
+	
 	public int number;
 	
 	public Integer life;
@@ -25,6 +29,7 @@ public class Monster {
 	
 	// Hearth blood
 	public int hp;
+	public int hpMax;
 	
 	// Damage -- (integer) -- if any
 	public int attackDamage;
@@ -45,5 +50,18 @@ public class Monster {
 		life = LIVE;
 	}
 	
+	public float getLifePercentage() {
+		return (float)hp / hpMax;
+	}
+	
+	public int getLifePeriod() {
+		float lifePercentage = getLifePercentage();
+		if (lifePercentage < 0.3) {
+			return RED_LIFE;
+		} if (lifePercentage < 0.7) {
+			return YELLOW_LIFE;
+		}
+		return GREEN_LIFE;
+	}
 	
 }

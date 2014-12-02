@@ -35,9 +35,10 @@ import org.andengine.opengl.texture.region.ITiledTextureRegion;
 import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
+import org.andengine.util.color.Color;
 
-import android.graphics.Color;
 import android.graphics.Typeface;
+import android.provider.SyncStateContract.Helpers;
 
 public class MainActivity extends SimpleBaseGameActivity implements
 		IOnSceneTouchListener {
@@ -67,6 +68,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 	private Scene scene;
 	private RepeatingSpriteBackground mGrassBackground;
 
+	private Map<AnimatedSprite, Rectangle> healthBarMap;
 	private Map<String, TiledTextureRegion> textureRegionMap;
 	private BitmapTextureAtlas mBitmapTextureAtlas;
 	private TiledTextureRegion mPlayerTextureRegion;
@@ -100,6 +102,8 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		this.monsters = new ArrayList<AnimatedSprite>();
 		this.towers = new ArrayList<AnimatedSprite>();
 		this.shopItems = new ArrayList<AnimatedSprite>();
+		
+		this.healthBarMap = new HashMap<AnimatedSprite, Rectangle>();
 
 		final ITexture strokeFontTexture = new BitmapTextureAtlas(this.getTextureManager(), 256, 256, TextureOptions.BILINEAR);
 		this.mStrokeFont = new StrokeFont(this.getFontManager(), strokeFontTexture, Typeface.create(Typeface.DEFAULT, Typeface.BOLD), FONT_SIZE, true, Color.BLACK, 2, Color.WHITE);
@@ -263,11 +267,11 @@ public class MainActivity extends SimpleBaseGameActivity implements
 			itemCover.setPosition(graLocat.px, graLocat.py);
 			
 		} else {
-			int monsterCharacterIndex = 0;
-			Monster monster = game.createMonster(monsterCharacterIndex, LayerConvertor.graphicLocationToMaxtrix2d(
-					new Location2d(pSceneTouchEvent.getX(), pSceneTouchEvent.getY())), 
-					new Size2d(48, 64));
-			createMonster(scene, monster, monster.number);
+//			int monsterCharacterIndex = 0;
+//			Monster monster = game.createMonster(monsterCharacterIndex, LayerConvertor.graphicLocationToMaxtrix2d(
+//					new Location2d(pSceneTouchEvent.getX(), pSceneTouchEvent.getY())), 
+//					new Size2d(48, 64));
+//			createMonster(scene, monster, monster.number);
 		}
 		if (pSceneTouchEvent.isActionUp()) {
 			// execute action.
@@ -326,11 +330,23 @@ public class MainActivity extends SimpleBaseGameActivity implements
 							@Override
 							public void run() {
 								int monsterStatus = game.shoot(towerIndex, monsterIndex);
+								
+								AnimatedSprite monster = null;
+								monster =  getGraphicMonster(monsterIndex);
+								
 								if (monsterStatus == Monster.DEAD) {
-									if (monsters != null && !monsters.isEmpty()) {
-										AnimatedSprite monster =  getGraphicMonster(monsterIndex);
+									if (monsters != null && !monsters.isEmpty() && monster != null) {
 										monsters.remove(monster);
 										scene.detachChild(monster);
+										scene.detachChild(healthBarMap.get(monster));
+										healthBarMap.remove(monster);
+									}
+								} else {
+									if (monster != null) {
+										Rectangle healthBar = healthBarMap.get(monster);
+										Monster monsterInfo = game.getMonster(monsterIndex);
+										healthBar.setWidth(monster.getWidth() * monsterInfo.getLifePercentage());
+										healthBar.setColor(parseColor(monsterInfo.getLifePeriod()));
 									}
 								}
 								scene.detachChild(sprite);
@@ -342,6 +358,15 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		scene.attachChild(sprite);
 	}
 
+	private Color parseColor(int colorLife) {
+		if (Monster.GREEN_LIFE == colorLife) {
+			return Color.GREEN;
+		} else if (Monster.YELLOW_LIFE == colorLife) {
+			return Color.YELLOW;
+		}
+		return Color.RED;
+	}
+	
 	private AnimatedSprite createMonster(final Scene scene, Monster monster, int tagIndex ) {
 		final AnimatedSprite sprite = new AnimatedSprite(
 				monster.putting.columnIndex, monster.putting.rowIndex,
@@ -349,11 +374,6 @@ public class MainActivity extends SimpleBaseGameActivity implements
 				this.mPlayerTextureRegion,
 				this.getVertexBufferObjectManager());
 		
-	  final AnimatedSprite	sprite1 = new AnimatedSprite(
-				monster.putting.columnIndex, monster.putting.rowIndex,
-				monster.spriteSize.width, 10,
-				this.mHpTextureRegion,
-				this.getVertexBufferObjectManager());
 		MatrixLocation2d[] locs = game.getCurrentMonsterPath();
 		final Path path = new Path(locs.length);
 		for (MatrixLocation2d point : locs) {
@@ -430,6 +450,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 								mEngine.runOnUpdateThread(new Runnable() {
 									@Override
 									public void run() {
+										game.removeMonster(sprite.getTag());
 										monsters.remove(sprite);
 										scene.detachChild(sprite);
 									}
@@ -437,7 +458,9 @@ public class MainActivity extends SimpleBaseGameActivity implements
 							}
 						}));
 		
-		sprite1.registerEntityModifier(new LoopEntityModifier(
+		final Rectangle healthBar = new Rectangle(0, 0, monster.spriteSize.width, 10, this.getVertexBufferObjectManager());
+		healthBar.setColor(Color.GREEN);
+		healthBar.registerEntityModifier(
 				new PathModifier(MAX_TIME / monster.moveSpeed, path1, null,
 						new IPathModifierListener() {
 							@Override
@@ -472,15 +495,21 @@ public class MainActivity extends SimpleBaseGameActivity implements
 							public void onPathFinished(
 									final PathModifier pPathModifier,
 									final IEntity pEntity) {
-
+								mEngine.runOnUpdateThread(new Runnable() {
+									@Override
+									public void run() {
+//										game.removeMonster(healthBar.getTag());
+//										monsters.remove(healthBar);
+										scene.detachChild(healthBar);
+									}
+								});
 							}
-						})));
-		scene.attachChild(sprite1);
+						}));
+		scene.attachChild(healthBar);
 		scene.attachChild(sprite);
+		healthBarMap.put(sprite, healthBar);
 		monsters.add(sprite);
-		monsters.add(sprite1);
 		sprite.setTag(tagIndex);
-		sprite1.setTag(tagIndex);
 		return sprite;
 	
 		

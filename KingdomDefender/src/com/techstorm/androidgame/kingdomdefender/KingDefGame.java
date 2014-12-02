@@ -137,6 +137,11 @@ public class KingDefGame {
 		return Monster.LIVE;
 	}
 	
+	public void removeMonster(int monsterIndex) {
+		Monster monster = getMonster(monsterIndex);
+		levelMaps.get(levelMapIndex).getCurrentMonsters().remove(monster);
+	}
+	
 	public int calcHpDamaged(int towerIndex, int monsterIndex) {
 		Tower tower = getTower(towerIndex);
 		return tower.damage;
@@ -236,6 +241,7 @@ public class KingDefGame {
 		Monster cloneMonster = new Monster();
 		cloneMonster.attackDamage = monster.attackDamage;
 		cloneMonster.hp = monster.hp;
+		cloneMonster.hpMax = monster.hpMax;
 		cloneMonster.hurtEffect = monster.hurtEffect;
 		cloneMonster.name = monster.name;
 		cloneMonster.putting = monster.putting;

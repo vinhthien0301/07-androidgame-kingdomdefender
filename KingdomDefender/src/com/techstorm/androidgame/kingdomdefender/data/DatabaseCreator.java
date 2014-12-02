@@ -183,7 +183,8 @@ public class DatabaseCreator {
 	private static void setFieldMonsterCharacter(Monster monsterCharacter, Cursor cur) {
 		monsterCharacter.attackDamage = cur.getInt(cur.getColumnIndex("K_DAMAGE"));
 		monsterCharacter.rewardCost = cur.getInt(cur.getColumnIndex("K_REWARD"));
-		monsterCharacter.hp = cur.getInt(cur.getColumnIndex("K_HP"));
+		monsterCharacter.hpMax = cur.getInt(cur.getColumnIndex("K_HP"));
+		monsterCharacter.hp = monsterCharacter.hpMax;
 		monsterCharacter.name = cur.getString(cur.getColumnIndex("K_NAME"));
 		monsterCharacter.fileName = cur.getString(cur.getColumnIndex("K_SPRITE_FILE_NAME"));
 		int matrixWidth = cur.getInt(cur.getColumnIndex("K_MATRIX_WIDTH"));
