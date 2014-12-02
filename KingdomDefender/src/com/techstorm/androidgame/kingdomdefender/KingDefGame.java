@@ -59,7 +59,7 @@ public class KingDefGame {
 	public Tower createTower(int shopItemIndex, MatrixLocation2d matrixLoc2d, float width, float height) {
 		Tower tower = cloneTower(shopItems.get(shopItemIndex));
 		tower.number = towerNumber.getNumber();
-		tower.putting = matrixLoc2d;
+		tower.matrixLocation = matrixLoc2d;
 		tower.spriteSize = new Size2d(width, height);
 		levelMaps.get(levelMapIndex).getCurrentTowers().add(tower);
 		levelMaps.get(levelMapIndex).subsMoney(tower.buyCost);
@@ -75,7 +75,7 @@ public class KingDefGame {
 		cloneTower.attackSpeed = tower.attackSpeed;
 		cloneTower.buyCost = tower.buyCost;
 		cloneTower.damage = tower.damage;
-		cloneTower.putting = tower.putting;
+		cloneTower.matrixLocation = tower.matrixLocation;
 		cloneTower.range = tower.range;
 		cloneTower.sellCost = tower.sellCost;
 		cloneTower.spriteSize = tower.spriteSize;
@@ -209,8 +209,8 @@ public class KingDefGame {
 		}
 		tower.attackTimeWait = 0;
 		
-		if (Math.abs(monster.putting.columnIndex - tower.putting.columnIndex) <= tower.range
-				&& Math.abs(monster.putting.rowIndex - tower.putting.rowIndex) <= tower.range) {
+		if (Math.abs(monster.matrixLocation.columnIndex - tower.matrixLocation.columnIndex) <= tower.range
+				&& Math.abs(monster.matrixLocation.rowIndex - tower.matrixLocation.rowIndex) <= tower.range) {
 			return true;
 		}
 		return false;
@@ -230,7 +230,7 @@ public class KingDefGame {
 		}
 		Monster monster = cloneMonster(monsterCharacter.get(monsterCharacterIndex));
 		monster.number = monsterNumber.getNumber();
-		monster.putting = matrixLoc2d;
+		monster.matrixLocation = matrixLoc2d;
 		monster.spriteSize = size2d;
 		levelMaps.get(levelMapIndex).getCurrentMonsters().add(monster);
 		monsterNumber.increase(1);
@@ -244,7 +244,7 @@ public class KingDefGame {
 		cloneMonster.hpMax = monster.hpMax;
 		cloneMonster.hurtEffect = monster.hurtEffect;
 		cloneMonster.name = monster.name;
-		cloneMonster.putting = monster.putting;
+		cloneMonster.matrixLocation = monster.matrixLocation;
 		cloneMonster.rewardCost = monster.rewardCost;
 		cloneMonster.spriteSize = monster.spriteSize;
 		cloneMonster.matrixSize = monster.matrixSize;
@@ -271,7 +271,7 @@ public class KingDefGame {
 		if (monster == null) {
 			return;
 		}
-		monster.putting = newPosition;
+		monster.matrixLocation = newPosition;
 	}
 	
 }

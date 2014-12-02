@@ -229,7 +229,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 				Monster monster = gameTower.target;
 				// Shooting target.
 				if (game.canShoot(pSecondsElapsed, gameTower, monster)) {
-					createShooter(scene, gameTower.number, monster.number, tower, LayerConvertor.maxtrixToGraphicLocation2d(monster.putting));
+					createShooter(scene, gameTower.number, monster.number, tower, LayerConvertor.maxtrixToGraphicLocation2d(monster.matrixLocation));
 				} else if (game.isInMonsterList(monster) || !gameTower.isInShootRange(monster)) {
 					gameTower.target = null;
 				}
@@ -261,6 +261,18 @@ public class MainActivity extends SimpleBaseGameActivity implements
 			Location2d graLocat = LayerConvertor.maxtrixToGraphicLocation2d(locat);
 			itemCover.setPosition(graLocat.px, graLocat.py);
 			shopItemDragging.setPosition(graLocat.px, graLocat.py);
+			Tower towerInfo = game.getShopItem(shopItemDragging.getTag());
+			boolean conflicted = false;
+			for (Tower tower : game.getCurrentTowers()) {
+				if (tower.isIntersection(locat, towerInfo.matrixSize)) {
+					conflicted = true;
+				}
+			}
+			if (conflicted) {
+				itemCover.setColor(Color.RED);
+			} else {
+				itemCover.setColor(Color.GREEN);
+			}
 		} else {
 //			int monsterCharacterIndex = 0;
 //			Monster monster = game.createMonster(monsterCharacterIndex, LayerConvertor.graphicLocationToMaxtrix2d(
@@ -274,6 +286,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 				createTowerBought(shopItemDragging.getTiledTextureRegion(), shopItemDragging.getTag(), 
 						shopItemDragging.getX(), shopItemDragging.getY(), 
 						shopItemDragging.getWidth(), shopItemDragging.getHeight());
+				scene.detachChild(itemCover);
 				shopItemDragging = null;
 				
 				textStroke.setText(String.valueOf(game.getCurrentMoney()));
@@ -364,7 +377,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 	
 	private AnimatedSprite createMonster(final Scene scene, Monster monster, int tagIndex ) {
 		final AnimatedSprite sprite = new AnimatedSprite(
-				monster.putting.columnIndex, monster.putting.rowIndex,
+				monster.matrixLocation.columnIndex, monster.matrixLocation.rowIndex,
 				monster.spriteSize.width, monster.spriteSize.height,
 				this.mPlayerTextureRegion,
 				this.getVertexBufferObjectManager());
@@ -602,7 +615,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		for (int index = 0; index < game.getCurrentTowers().size(); index++) {
 			Tower tower = game.getCurrentTowers().get(index);
 			Location2d loca = LayerConvertor
-					.maxtrixToGraphicLocation2d(tower.putting);
+					.maxtrixToGraphicLocation2d(tower.matrixLocation);
 			final AnimatedSprite sprite = new AnimatedSprite(loca.px, loca.py,
 					tower.spriteSize.width, tower.spriteSize.height,
 					this.mPlayerTextureRegion,

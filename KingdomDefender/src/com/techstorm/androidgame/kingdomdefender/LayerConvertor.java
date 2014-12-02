@@ -18,5 +18,20 @@ public class LayerConvertor {
 		return new MatrixLocation2d((int)location2d.px / CONVERTOR_WIDTH_OF_SQUARE,
 				(int)location2d.py / CONVERTOR_HEIGHT_OF_SQUARE);
 	}
+	
+	public static boolean isIntersection(MatrixLocation2d location1, MatrixSize2d size1, MatrixLocation2d location2, MatrixSize2d size2) {
+		float columnMin = location1.columnIndex;
+		float columnMax = location1.columnIndex + size1.width - 1;
+		float rowMin = location1.rowIndex;
+		float rowMax = location1.rowIndex + size1.height - 1;
+		
+		float outColumnMin = location2.columnIndex;
+		float outColumnMax = location2.columnIndex + size2.width - 1;
+		float outRowMin = location2.rowIndex;
+		float outRowMax = location2.rowIndex + size2.height - 1;
+		return (((columnMin <= outColumnMin && outColumnMin <= columnMax) || (columnMin <= outColumnMax && outColumnMax <= columnMax))
+				&&
+				((rowMin <= outRowMin && outRowMin <= rowMax) || (rowMin <= outRowMax && outRowMax <= rowMax)));
+	}
 
 }

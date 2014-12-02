@@ -11,7 +11,7 @@ public class Tower {
 	public float attackTimeWait;
 	
 	// DB-
-	public MatrixLocation2d putting;
+	public MatrixLocation2d matrixLocation;
 	public Size2d spriteSize;
 	public MatrixSize2d matrixSize;
 	public String fileName;
@@ -45,17 +45,21 @@ public class Tower {
 		if (targetMonster == null) {
 			return false;
 		}
-		if (Math.abs(targetMonster.putting.columnIndex - this.putting.columnIndex) <= this.range
-				&& Math.abs(targetMonster.putting.rowIndex - this.putting.rowIndex) <= this.range) {
+		if (Math.abs(targetMonster.matrixLocation.columnIndex - this.matrixLocation.columnIndex) <= this.range
+				&& Math.abs(targetMonster.matrixLocation.rowIndex - this.matrixLocation.rowIndex) <= this.range) {
 			return true;
 		}
 		return false;
 	}
 	
 	public float distance(Monster targetMonster) {
-		float columnDistance = targetMonster.putting.columnIndex - this.putting.columnIndex;
-		float rowDistance = targetMonster.putting.rowIndex - this.putting.rowIndex;
+		float columnDistance = targetMonster.matrixLocation.columnIndex - this.matrixLocation.columnIndex;
+		float rowDistance = targetMonster.matrixLocation.rowIndex - this.matrixLocation.rowIndex;
 		return (float)Math.sqrt((columnDistance * columnDistance) + (rowDistance * rowDistance));
+	}
+	
+	public boolean isIntersection(MatrixLocation2d location, MatrixSize2d size) {
+		return LayerConvertor.isIntersection(this.matrixLocation, this.matrixSize, location, size);
 	}
 	
 }

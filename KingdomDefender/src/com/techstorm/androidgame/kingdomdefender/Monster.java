@@ -19,7 +19,7 @@ public class Monster {
 	
 	public Integer moveSpeed;
 	
-	public MatrixLocation2d putting;
+	public MatrixLocation2d matrixLocation;
 	
 	public Size2d spriteSize;
 	
@@ -45,7 +45,7 @@ public class Monster {
 	}
 	
 	public Monster(MatrixLocation2d put, Size2d size) {
-		this.putting = put;
+		this.matrixLocation = put;
 		this.spriteSize = size;
 		life = LIVE;
 	}
@@ -64,4 +64,7 @@ public class Monster {
 		return GREEN_LIFE;
 	}
 	
+	public boolean isIntersection(MatrixLocation2d location, MatrixSize2d size) {
+		return LayerConvertor.isIntersection(this.matrixLocation, this.matrixSize, location, size);
+	}
 }
