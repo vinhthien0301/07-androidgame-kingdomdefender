@@ -64,7 +64,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 	private int row;
 	private Scene scene;
 	private RepeatingSpriteBackground mGrassBackground;
-
+	private boolean check;
 	private Map<AnimatedSprite, Rectangle> healthBarMap;
 	private Map<String, TiledTextureRegion> textureRegionMap;
 	private BitmapTextureAtlas mBitmapTextureAtlas;
@@ -270,8 +270,10 @@ public class MainActivity extends SimpleBaseGameActivity implements
 			}
 			if (conflicted) {
 				itemCover.setColor(Color.RED);
+				check = conflicted;
 			} else {
 				itemCover.setColor(Color.GREEN);
+				check = conflicted;
 			}
 		} else {
 //			int monsterCharacterIndex = 0;
@@ -283,6 +285,10 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		if (pSceneTouchEvent.isActionUp()) {
 			// execute action.
 			if (shopItemDragging != null) {
+				if (check) {
+					scene.detachChild(itemCover);
+					scene.detachChild(shopItemDragging);
+				}else{
 				createTowerBought(shopItemDragging.getTiledTextureRegion(), shopItemDragging.getTag(), 
 						shopItemDragging.getX(), shopItemDragging.getY(), 
 						shopItemDragging.getWidth(), shopItemDragging.getHeight());
@@ -290,7 +296,8 @@ public class MainActivity extends SimpleBaseGameActivity implements
 				shopItemDragging = null;
 				
 				textStroke.setText(String.valueOf(game.getCurrentMoney()));
-			}
+				}
+				}
 		}
 		return true;
 	}
