@@ -1,5 +1,6 @@
 package com.techstorm.androidgame.kingdomdefender;
 
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -67,15 +68,16 @@ public class MainActivity extends SimpleBaseGameActivity implements
 	private Scene scene;
 	private RepeatingSpriteBackground mGrassBackground;
 	private Map<AnimatedSprite, Rectangle> healthBarMap;
+	private Map<Integer, AnimatedSprite> rangeSpriteMap;
 	private Map<String, TiledTextureRegion> textureRegionMap;
 	private BitmapTextureAtlas mBitmapTextureAtlas;
 	private TiledTextureRegion mPlayerTextureRegion;
 	private BitmapTextureAtlas mHpTextureAtlas;
 	private BitmapTextureAtlas mCircleTextureAtlas;
 	private TiledTextureRegion mCircleTextureRegion;
-	private TiledTextureRegion Circle;
 	private AnimatedSprite spriteCircleMain;
 	private float a;
+
 	// ===========================================================
 	// Constructors
 	// ===========================================================
@@ -106,7 +108,8 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		this.shopItems = new ArrayList<AnimatedSprite>();
 
 		this.healthBarMap = new HashMap<AnimatedSprite, Rectangle>();
-
+		this.rangeSpriteMap = new HashMap<Integer, AnimatedSprite>();
+		
 		final ITexture strokeFontTexture = new BitmapTextureAtlas(
 				this.getTextureManager(), 256, 256, TextureOptions.BILINEAR);
 		this.mStrokeFont = new StrokeFont(this.getFontManager(),
@@ -130,12 +133,11 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		this.mHpTextureAtlas.load();
 		this.mCircleTextureAtlas = new BitmapTextureAtlas(
 				this.getTextureManager(), 64, 64);
-		
+
 		this.mCircleTextureRegion = BitmapTextureAtlasTextureRegionFactory
 				.createTiledFromAsset(this.mCircleTextureAtlas, this,
 						"circle.png", 0, 0, 1, 1);
 		this.mCircleTextureAtlas.load();
-		Circle = mCircleTextureRegion;
 
 		this.textureRegionMap = new HashMap<String, TiledTextureRegion>();
 		for (Tower tower : game.shopItems) {
@@ -174,7 +176,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		}
 		return key.toString();
 	}
-	
+
 	@Override
 	public Scene onCreateScene() {
 		this.mEngine.registerUpdateHandler(new FPSLogger());
@@ -183,8 +185,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		scene.setOnSceneTouchListener(this);
 		scene.registerUpdateHandler(loop);
 		this.scene = scene;
-		
-		
+
 		/*
 		 * Calculate the coordinates for the face, so its centered on the
 		 * camera.
@@ -203,8 +204,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		// final Line line = new Line(x1, y1, x2, y2, lineWidth);
 		int numberOfColumnLines = LayerConvertor.CAMERA_WIDTH
 				/ LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE + 1;
-		int numberOfRowLines = LayerConvertor.CAMERA_HEIGHT
-				/   + 1;
+		int numberOfRowLines = LayerConvertor.CAMERA_HEIGHT / +1;
 		for (int columnIndex = 0; columnIndex < numberOfColumnLines; columnIndex++) {
 			float columnPosition = columnIndex
 					* LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE;
@@ -304,11 +304,20 @@ public class MainActivity extends SimpleBaseGameActivity implements
 					.maxtrixToGraphicLocation2d(locat);
 			itemCover.setPosition(graLocat.px, graLocat.py);
 			shopItemDragging.setPosition(graLocat.px, graLocat.py);
-//			spriteCircleMain.setPosition(graLocat.px, graLocat.py);
-			spriteCircleMain.setPosition(graLocat.px - (a * (LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE) - (shopItemDragging.getWidth()/2)), 
-					graLocat.py - (a * (LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE) - (shopItemDragging.getHeight()/2)));
+			// spriteCircleMain.setPosition(graLocat.px, graLocat.py);
+			spriteCircleMain
+					.setPosition(
+							graLocat.px
+									- (a
+											* (LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE) - (shopItemDragging
+											.getWidth() / 2)),
+							graLocat.py
+									- (a
+											* (LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE) - (shopItemDragging
+											.getHeight() / 2)));
 			
 		} else {
+			
 			// int monsterCharacterIndex = 0;
 			// Monster monster = game.createMonster(monsterCharacterIndex,
 			// LayerConvertor.graphicLocationToMaxtrix2d(
@@ -317,9 +326,10 @@ public class MainActivity extends SimpleBaseGameActivity implements
 			// new Size2d(48, 64));
 			// createMonster(scene, monster, monster.number);
 		}
+		
 		if (pSceneTouchEvent.isActionUp()) {
 			// execute action.
-			
+
 			if (shopItemDragging != null) {
 				if (canBuyShop) {
 					createTowerBought(shopItemDragging.getTiledTextureRegion(),
@@ -335,9 +345,11 @@ public class MainActivity extends SimpleBaseGameActivity implements
 				}
 				scene.detachChild(itemCover);
 				scene.detachChild(spriteCircleMain);
-				
+
 			}
+			
 		}
+		
 		return true;
 	}
 
@@ -359,13 +371,13 @@ public class MainActivity extends SimpleBaseGameActivity implements
 					conflicted = true;
 				}
 			}
-			
+
 			if (conflicted) {
 				itemCover.setColor(RED_COLOR);
 			} else {
 				itemCover.setColor(GREEN_COLOR);
 			}
-			
+
 			canBuyShop = !conflicted;
 		}
 	}
@@ -602,6 +614,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		final AnimatedSprite tower = new AnimatedSprite(graphicX, graphicY,
 				width, height, tiledTextureRegion,
 				this.getVertexBufferObjectManager());
+		rangeSpriteMap.put(gameTower.number, spriteCircleMain);
 		tower.setTag(gameTower.number);
 		towers.add(tower);
 		return tower;
@@ -632,6 +645,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 				if (tower == null) {
 					continue;
 				}
+				
 				final AnimatedSprite sprite = new AnimatedSprite(
 						LayerConvertor.CAMERA_WIDTH / 2 + distance,
 						LayerConvertor.CAMERA_HEIGHT
@@ -650,29 +664,42 @@ public class MainActivity extends SimpleBaseGameActivity implements
 							final float pTouchAreaLocalY) {
 						if (pSceneTouchEvent.isActionDown()) {
 							if (game.canBuy(this.getTag())) {
+								spriteCircleMain = new AnimatedSprite(
+										this.getX(),
+										this.getY(),
+										(float) tower.range
+												* LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE
+												* 2,
+										(float) tower.range
+												* LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE
+												* 2, mCircleTextureRegion,
+										this.getVertexBufferObjectManager());
+								rangeSpriteMap.put(-1, spriteCircleMain);
+								
 								AnimatedSprite dragShopItem = createShopItemDragging(
 										this.getTiledTextureRegion(),
 										this.getTag(), this.getX(),
 										this.getY(), this.getWidth(),
 										this.getHeight());
+								
 								itemCover = new Rectangle(
 										pSceneTouchEvent.getX(),
 										pSceneTouchEvent.getY(),
 										this.getWidth(), this.getHeight(),
 										this.getVertexBufferObjectManager());
+
 								
-								spriteCircleMain = new AnimatedSprite(this.getX(),
-										this.getY(), (float) tower.range *LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE*2,
-										(float) tower.range
-												*LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE*2,
-										Circle, this.getVertexBufferObjectManager());
-							a = (float) tower.range;
+								
+								
+								a = (float) tower.range;
+								
+								 scene.registerTouchArea(spriteCircleMain);
+
 								scene.attachChild(spriteCircleMain);
 								scene.attachChild(itemCover);
 								shopItemDragging = dragShopItem;
 								scene.attachChild(dragShopItem);
-								scene.attachChild(spriteCircleMain);
-								
+
 							}
 						}
 						onSceneTouchEvent(scene, pSceneTouchEvent);
@@ -682,7 +709,6 @@ public class MainActivity extends SimpleBaseGameActivity implements
 				};
 				sprite.setTag(index);
 				distance += 100;
-
 				scene.registerTouchArea(sprite);
 				scene.setTouchAreaBindingOnActionDownEnabled(true);
 				scene.attachChild(sprite);
@@ -692,13 +718,41 @@ public class MainActivity extends SimpleBaseGameActivity implements
 	}
 
 	private AnimatedSprite createShopItemDragging(
-			ITiledTextureRegion tiledTextureRegion, int shopItemIndex,
+			ITiledTextureRegion tiledTextureRegion, final int shopItemIndex,
 			float graphicX, float graphicY, float width, float height) {
 		final AnimatedSprite shopItem = new AnimatedSprite(graphicX, graphicY,
 				width, height, tiledTextureRegion,
-				this.getVertexBufferObjectManager());
+				this.getVertexBufferObjectManager()) {
+			@Override
+			public boolean onAreaTouched(
+					final TouchEvent pSceneTouchEvent,
+					final float pTouchAreaLocalX,
+					final float pTouchAreaLocalY) {
+				if (pSceneTouchEvent.isActionDown()) {
+					AnimatedSprite circle = rangeSpriteMap.get(shopItemIndex);
+					if (circle == null) {
+						circle = rangeSpriteMap.get(-1);
+					}
+					if (!circle.hasParent()) {
+						scene.attachChild(circle);
+					} else {
+						scene.detachChild(circle);
+					}
+				}
+				onSceneTouchEvent(scene, pSceneTouchEvent);
+				return true;
+			}
+
+		
+		};
+		scene.registerTouchArea(shopItem);
+		scene.setTouchAreaBindingOnActionDownEnabled(true);
 		shopItem.setTag(shopItemIndex);
 		return shopItem;
+	}
+
+	public void onAreaTouched(final TouchEvent pSceneTouchEvent,
+			final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
 	}
 
 	private void createTower(Scene scene) {
