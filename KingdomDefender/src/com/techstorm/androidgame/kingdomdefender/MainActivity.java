@@ -74,6 +74,8 @@ public class MainActivity extends SimpleBaseGameActivity implements
 	private BitmapTextureAtlas mCircleTextureAtlas;
 	private TiledTextureRegion mCircleTextureRegion;
 	private TiledTextureRegion Circle;
+	private BitmapTextureAtlas mBoundTextureAtlas;
+	private TiledTextureRegion mBoundTextureRegion;
 	private AnimatedSprite spriteCircleMain;
 	private float a;
 	// ===========================================================
@@ -128,6 +130,14 @@ public class MainActivity extends SimpleBaseGameActivity implements
 				200, 50);
 
 		this.mHpTextureAtlas.load();
+		
+		this.mBoundTextureAtlas = new BitmapTextureAtlas(
+				this.getTextureManager(), 64, 64);
+		this.mBoundTextureRegion = BitmapTextureAtlasTextureRegionFactory
+				.createTiledFromAsset(this.mBoundTextureAtlas, this,
+						"box.png", 0, 0, 1, 1);
+		this.mBoundTextureAtlas.load();
+		
 		this.mCircleTextureAtlas = new BitmapTextureAtlas(
 				this.getTextureManager(), 64, 64);
 		
@@ -191,6 +201,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		 */
 		/* Create the sprite and add it to the scene. */
 		createSquare(scene);
+		createBounds(scene);
 		initMonsters(scene);
 		createTower(scene);
 		createShop(scene);
@@ -199,12 +210,57 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		return scene;
 	}
 
+	private void createBounds(Scene scene) {
+		int numberOfColumnLines = LayerConvertor.CAMERA_WIDTH
+				/ LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE;
+		int numberOfRowLines = LayerConvertor.CAMERA_HEIGHT
+				/ LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE;
+		
+		float bottomBound = (numberOfRowLines - 1) * LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE;
+		for (int columnIndex = 0; columnIndex < numberOfColumnLines; columnIndex++) {
+			float columnPosition = columnIndex
+					* LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE;
+			AnimatedSprite bound = new AnimatedSprite(columnPosition,
+					0, LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE, 
+					LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE,
+					mBoundTextureRegion,
+					this.getVertexBufferObjectManager());
+			scene.attachChild(bound);
+			
+			bound = new AnimatedSprite(columnPosition,
+					bottomBound, LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE, 
+					LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE,
+					mBoundTextureRegion,
+					this.getVertexBufferObjectManager());
+			scene.attachChild(bound);
+		}
+		
+		float rightBound = (numberOfColumnLines) * LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE;
+		for (int rowIndex = 0; rowIndex < numberOfRowLines; rowIndex++) {
+			float rowPosition = rowIndex
+					* LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE;
+			AnimatedSprite bound = new AnimatedSprite(0,
+					rowPosition, LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE, 
+					LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE,
+					mBoundTextureRegion,
+					this.getVertexBufferObjectManager());
+			scene.attachChild(bound);
+			
+			bound = new AnimatedSprite(rightBound,
+					rowPosition, LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE, 
+					LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE,
+					mBoundTextureRegion,
+					this.getVertexBufferObjectManager());
+			scene.attachChild(bound);
+		}
+	}
+
 	private void createSquare(Scene scene) {
 		// final Line line = new Line(x1, y1, x2, y2, lineWidth);
 		int numberOfColumnLines = LayerConvertor.CAMERA_WIDTH
 				/ LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE + 1;
 		int numberOfRowLines = LayerConvertor.CAMERA_HEIGHT
-				/   + 1;
+				/ LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE;
 		for (int columnIndex = 0; columnIndex < numberOfColumnLines; columnIndex++) {
 			float columnPosition = columnIndex
 					* LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE;
@@ -671,7 +727,6 @@ public class MainActivity extends SimpleBaseGameActivity implements
 								scene.attachChild(itemCover);
 								shopItemDragging = dragShopItem;
 								scene.attachChild(dragShopItem);
-								scene.attachChild(spriteCircleMain);
 								
 							}
 						}
