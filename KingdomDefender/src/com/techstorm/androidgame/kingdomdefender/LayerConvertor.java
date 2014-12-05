@@ -1,5 +1,9 @@
 package com.techstorm.androidgame.kingdomdefender;
 
+import java.util.List;
+
+import org.andengine.entity.modifier.PathModifier.Path;
+
 public class LayerConvertor {
 
 	public static final int CAMERA_WIDTH = 720;
@@ -17,6 +21,17 @@ public class LayerConvertor {
 			Location2d location2d) {
 		return new MatrixLocation2d((int)location2d.px / CONVERTOR_WIDTH_OF_SQUARE,
 				(int)location2d.py / CONVERTOR_HEIGHT_OF_SQUARE);
+	}
+	
+	public static Path matrixToPath(
+			List<MatrixLocation2d> matrixLocation2d) {
+		final Path path = new Path(matrixLocation2d.size());
+		for (MatrixLocation2d point : matrixLocation2d) {
+			Location2d locat2d = LayerConvertor
+					.maxtrixToGraphicLocation2d(point);
+			path.to(locat2d.px, locat2d.py);
+		}
+		return path;
 	}
 	
 	public static boolean isIntersection(MatrixLocation2d location1, MatrixSize2d size1, MatrixLocation2d location2, MatrixSize2d size2) {

@@ -58,6 +58,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 	private StrokeFont mStrokeFont;
 
 	private KingDefGame game;
+	private AStarAlgorithm pathAlgorithm;
 	private Tower tow;
 	private List<AnimatedSprite> monsters;
 	private List<AnimatedSprite> towers;
@@ -75,6 +76,8 @@ public class MainActivity extends SimpleBaseGameActivity implements
 	private BitmapTextureAtlas mHpTextureAtlas;
 	private BitmapTextureAtlas mCircleTextureAtlas;
 	private TiledTextureRegion mCircleTextureRegion;
+	private BitmapTextureAtlas mBoundTextureAtlas;
+	private TiledTextureRegion mBoundTextureRegion;
 	private AnimatedSprite spriteCircleMain;
 	private float a;
 
@@ -103,6 +106,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 	@Override
 	public void onCreateResources() {
 		this.game = new KingDefGame(this);
+		this.pathAlgorithm = new AStarAlgorithm(this.game);
 		this.monsters = new ArrayList<AnimatedSprite>();
 		this.towers = new ArrayList<AnimatedSprite>();
 		this.shopItems = new ArrayList<AnimatedSprite>();
@@ -131,6 +135,14 @@ public class MainActivity extends SimpleBaseGameActivity implements
 				200, 50);
 
 		this.mHpTextureAtlas.load();
+		
+		this.mBoundTextureAtlas = new BitmapTextureAtlas(
+				this.getTextureManager(), 64, 64);
+		this.mBoundTextureRegion = BitmapTextureAtlasTextureRegionFactory
+				.createTiledFromAsset(this.mBoundTextureAtlas, this,
+						"box.png", 0, 0, 1, 1);
+		this.mBoundTextureAtlas.load();
+		
 		this.mCircleTextureAtlas = new BitmapTextureAtlas(
 				this.getTextureManager(), 64, 64);
 
@@ -192,6 +204,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		 */
 		/* Create the sprite and add it to the scene. */
 		createSquare(scene);
+		createBounds(scene);
 		initMonsters(scene);
 		createTower(scene);
 		createShop(scene);
@@ -200,11 +213,57 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		return scene;
 	}
 
+	private void createBounds(Scene scene) {
+		int numberOfColumnLines = LayerConvertor.CAMERA_WIDTH
+				/ LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE;
+		int numberOfRowLines = LayerConvertor.CAMERA_HEIGHT
+				/ LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE;
+		
+		float bottomBound = (numberOfRowLines - 1) * LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE;
+		for (int columnIndex = 0; columnIndex < numberOfColumnLines; columnIndex++) {
+			float columnPosition = columnIndex
+					* LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE;
+			AnimatedSprite bound = new AnimatedSprite(columnPosition,
+					0, LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE, 
+					LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE,
+					mBoundTextureRegion,
+					this.getVertexBufferObjectManager());
+			scene.attachChild(bound);
+			
+			bound = new AnimatedSprite(columnPosition,
+					bottomBound, LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE, 
+					LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE,
+					mBoundTextureRegion,
+					this.getVertexBufferObjectManager());
+			scene.attachChild(bound);
+		}
+		
+		float rightBound = (numberOfColumnLines) * LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE;
+		for (int rowIndex = 0; rowIndex < numberOfRowLines; rowIndex++) {
+			float rowPosition = rowIndex
+					* LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE;
+			AnimatedSprite bound = new AnimatedSprite(0,
+					rowPosition, LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE, 
+					LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE,
+					mBoundTextureRegion,
+					this.getVertexBufferObjectManager());
+			scene.attachChild(bound);
+			
+			bound = new AnimatedSprite(rightBound,
+					rowPosition, LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE, 
+					LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE,
+					mBoundTextureRegion,
+					this.getVertexBufferObjectManager());
+			scene.attachChild(bound);
+		}
+	}
+
 	private void createSquare(Scene scene) {
 		// final Line line = new Line(x1, y1, x2, y2, lineWidth);
 		int numberOfColumnLines = LayerConvertor.CAMERA_WIDTH
 				/ LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE + 1;
-		int numberOfRowLines = LayerConvertor.CAMERA_HEIGHT / +1;
+		int numberOfRowLines = LayerConvertor.CAMERA_HEIGHT
+				/ LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE;
 		for (int columnIndex = 0; columnIndex < numberOfColumnLines; columnIndex++) {
 			float columnPosition = columnIndex
 					* LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE;
@@ -472,7 +531,126 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		return Color.RED;
 	}
 
-	private AnimatedSprite createMonster(final Scene scene, Monster monster,
+	private AnimatedSprite createMonsterAutoGoing(final Scene scene, Monster monster,
+			int tagIndex) {
+		final AnimatedSprite sprite = new AnimatedSprite(
+				monster.matrixLocation.columnIndex,
+				monster.matrixLocation.rowIndex,
+				LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE
+						* monster.matrixSize.width,
+				LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE
+						* monster.matrixSize.height, this.mPlayerTextureRegion,
+				this.getVertexBufferObjectManager());
+
+		List<MatrixLocation2d> locs = pathAlgorithm.calcNextMoveMonster(tagIndex);
+		Path path = LayerConvertor.matrixToPath(locs);
+
+		sprite.registerEntityModifier(new PathModifier(MAX_TIME
+				/ monster.moveSpeed, path, null, new IPathModifierListener() {
+			@Override
+			public void onPathStarted(final PathModifier pPathModifier,
+					final IEntity pEntity)
+			{
+
+			}
+
+			@Override
+			public void onPathWaypointStarted(final PathModifier pPathModifier,
+					final IEntity pEntity, final int pWaypointIndex) {
+
+				switch (pWaypointIndex) {
+				case 0:
+					// move down
+					sprite.animate(new long[] { 200, 200, 200 }, 6, 8, true);
+
+					break;
+				case 1:
+					// move right
+					sprite.animate(new long[] { 200, 200, 200 }, 3, 5, true);
+					break;
+				case 2:
+					// move up
+					sprite.animate(new long[] { 200, 200, 200 }, 0, 2, true);
+					break;
+				case 3:
+					// move left
+					sprite.animate(new long[] { 200, 200, 200 }, 9, 11, true);
+					break;
+				}
+			}
+
+			@Override
+			public void onPathWaypointFinished(
+					final PathModifier pPathModifier, final IEntity pEntity,
+					final int pWaypointIndex) {
+
+			}
+
+			@Override
+			public void onPathFinished(final PathModifier pPathModifier,
+					final IEntity pEntity) {
+				mEngine.runOnUpdateThread(new Runnable() {
+					@Override
+					public void run() {
+						game.removeMonster(sprite.getTag());
+						monsters.remove(sprite);
+						scene.detachChild(sprite);
+					}
+				});
+			}
+		}));
+
+		final Rectangle healthBar = new Rectangle(0, 0,
+				LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE
+						* monster.matrixSize.width, 5,
+				this.getVertexBufferObjectManager());
+		healthBar.setColor(Color.GREEN);
+		healthBar.registerEntityModifier(new PathModifier(MAX_TIME
+				/ monster.moveSpeed, path, null, new IPathModifierListener() {
+			@Override
+			public void onPathStarted(final PathModifier pPathModifier,
+					final IEntity pEntity)
+
+			{
+
+			}
+
+			@Override
+			public void onPathWaypointStarted(final PathModifier pPathModifier,
+					final IEntity pEntity, final int pWaypointIndex) {
+
+			}
+
+			@Override
+			public void onPathWaypointFinished(
+					final PathModifier pPathModifier, final IEntity pEntity,
+					final int pWaypointIndex) {
+
+			}
+
+			@Override
+			public void onPathFinished(final PathModifier pPathModifier,
+					final IEntity pEntity) {
+				mEngine.runOnUpdateThread(new Runnable() {
+					@Override
+					public void run() {
+						// game.removeMonster(healthBar.getTag());
+						// monsters.remove(healthBar);
+						scene.detachChild(healthBar);
+					}
+				});
+			}
+		}));
+		scene.attachChild(healthBar);
+		scene.attachChild(sprite);
+		healthBarMap.put(sprite, healthBar);
+		monsters.add(sprite);
+		sprite.setTag(tagIndex);
+		return sprite;
+
+	}
+	
+	private AnimatedSprite createMonsterWithPath(final Scene scene, Monster monster,
 			int tagIndex) {
 		final AnimatedSprite sprite = new AnimatedSprite(
 				monster.matrixLocation.columnIndex,
@@ -624,7 +802,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		for (int index = 0; index < game.getCurrentMonsters().size(); index++) {
 			Monster monster = game.getCurrentMonsters().get(index);
 
-			createMonster(scene, monster, monster.number);
+			createMonsterAutoGoing(scene, monster, monster.number);
 		}
 	}
 
@@ -699,7 +877,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 								scene.attachChild(itemCover);
 								shopItemDragging = dragShopItem;
 								scene.attachChild(dragShopItem);
-
+								
 							}
 						}
 						onSceneTouchEvent(scene, pSceneTouchEvent);
