@@ -93,12 +93,11 @@ public class DatabaseCreator {
     		//Move cursor to first row
     		if  (c.moveToFirst()) {
     			do {
-    				final int centerX = (int)(LayerConvertor.CAMERA_WIDTH - 24) / 2;
-    				final int centerY = (int)(LayerConvertor.CAMERA_HEIGHT - 32) / 2;
-    				Monster monster = new Monster(new MatrixLocation2d(centerX, centerY), new Size2d(48, 64));
+    				Monster monster = new Monster();
     				characterId = c.getInt(c.getColumnIndex("K_CHARACTER"));
     				int waveIndex = c.getInt(c.getColumnIndex("K_WAVE"));
     				monster.moveSpeed = c.getInt(c.getColumnIndex("K_MOVE_SPEED"));
+    				monster.matrixLocation = new MatrixLocation2d(0, 4);
     				Wave wave = map.waves.get(waveIndex - 1);
     				wave.addMonster(monster);
     				
