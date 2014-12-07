@@ -36,6 +36,7 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 import org.andengine.util.color.Color;
 
+import android.R.integer;
 import android.graphics.Typeface;
 
 public class MainActivity extends SimpleBaseGameActivity implements
@@ -80,7 +81,10 @@ public class MainActivity extends SimpleBaseGameActivity implements
 	private TiledTextureRegion mBoundTextureRegion;
 	private AnimatedSprite spriteCircleMain;
 	private float a;
-
+	private BitmapTextureAtlas mMoneyTextureAtlas;
+	private TiledTextureRegion mMoneyTextureRegion;
+	private float b,c;
+	
 	// ===========================================================
 	// Constructors
 	// ===========================================================
@@ -150,6 +154,13 @@ public class MainActivity extends SimpleBaseGameActivity implements
 				.createTiledFromAsset(this.mCircleTextureAtlas, this,
 						"circle.png", 0, 0, 1, 1);
 		this.mCircleTextureAtlas.load();
+		this.mMoneyTextureAtlas = new BitmapTextureAtlas(
+				this.getTextureManager(), 64, 64);
+
+		this.mMoneyTextureRegion = BitmapTextureAtlasTextureRegionFactory
+				.createTiledFromAsset(this.mMoneyTextureAtlas, this,
+						"money.png", 0, 0, 1, 1);
+		this.mMoneyTextureAtlas.load();
 
 		this.textureRegionMap = new HashMap<String, TiledTextureRegion>();
 		for (Tower tower : game.shopItems) {
@@ -197,7 +208,6 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		scene.setOnSceneTouchListener(this);
 		scene.registerUpdateHandler(loop);
 		this.scene = scene;
-
 		/*
 		 * Calculate the coordinates for the face, so its centered on the
 		 * camera.
@@ -209,10 +219,22 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		createTower(scene);
 		createShop(scene);
 		createInformationBar(scene);
+		createMoneyIcon(scene);
 
+		
 		return scene;
 	}
-
+	private void createMoneyIcon(Scene scene)
+	{
+		final AnimatedSprite spriteMoney = new AnimatedSprite(LayerConvertor.CAMERA_WIDTH
+				/ LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE * 4,
+				0, LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE*2, 
+				LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE *2,
+				mMoneyTextureRegion,
+				this.getVertexBufferObjectManager());
+		scene.attachChild(spriteMoney);
+		
+	}
 	private void createBounds(Scene scene) {
 		int numberOfColumnLines = LayerConvertor.CAMERA_WIDTH
 				/ LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE;
@@ -498,6 +520,9 @@ public class MainActivity extends SimpleBaseGameActivity implements
 										scene.detachChild(healthBarMap
 												.get(monster));
 										healthBarMap.remove(monster);
+										int i=Integer.parseInt(String.valueOf(game.getCurrentMoney()).replaceAll("[\\D]", ""));
+										i+=1;
+										textStroke.setText(String.valueOf(i));
 									}
 								} else {
 									if (monster != null) {
@@ -652,6 +677,10 @@ public class MainActivity extends SimpleBaseGameActivity implements
 	
 	private AnimatedSprite createMonsterWithPath(final Scene scene, Monster monster,
 			int tagIndex) {
+		b = LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE
+				* monster.matrixSize.width;
+		c = LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE
+				* monster.matrixSize.height;
 		final AnimatedSprite sprite = new AnimatedSprite(
 				monster.matrixLocation.columnIndex,
 				monster.matrixLocation.rowIndex,
@@ -810,7 +839,7 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		final VertexBufferObjectManager vertexBufferObjectManager = this
 				.getVertexBufferObjectManager();
 		int textLength = 10;
-		textStroke = new Text(300, 200, this.mStrokeFont, String.valueOf(game
+		textStroke = new Text(0, 0, this.mStrokeFont, String.valueOf(game
 				.getCurrentMoney()), textLength, vertexBufferObjectManager);
 		scene.attachChild(textStroke);
 	}
