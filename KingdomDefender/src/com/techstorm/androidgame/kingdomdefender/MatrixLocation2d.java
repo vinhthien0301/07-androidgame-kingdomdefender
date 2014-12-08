@@ -13,4 +13,8 @@ public class MatrixLocation2d {
 		this.columnIndex = columnIndex;
 		this.rowIndex = rowIndex;
 	}
+	
+	public boolean equals(MatrixLocation2d mLocation2d) {
+		return this.columnIndex == mLocation2d.columnIndex && this.rowIndex == mLocation2d.rowIndex;
+	}
 }

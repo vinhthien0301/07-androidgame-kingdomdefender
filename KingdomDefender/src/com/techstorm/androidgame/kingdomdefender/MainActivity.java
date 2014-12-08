@@ -358,16 +358,20 @@ public class MainActivity extends SimpleBaseGameActivity implements
 	public void updateMonstersMoving() {
 		if (monsters != null && !monsters.isEmpty()) {
 			for (AnimatedSprite monster : monsters) {
-				MatrixLocation2d newMatrixLoc = new MatrixLocation2d(
-						(int) monster.getX()
-								/ LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE,
-						(int) monster.getY()
-								/ LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE);
-				game.updateMonsterMoving(monster.getTag(), newMatrixLoc);
+				updateMonsterMoving(monster.getX(), monster.getY(), monster.getTag());
 			}
 		}
 	}
 
+	private void updateMonsterMoving(float locationX, float locationY, int monsterNumber) {
+		MatrixLocation2d newMatrixLoc = new MatrixLocation2d(
+				(int) locationX
+						/ LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE,
+				(int) locationY
+						/ LayerConvertor.CONVERTOR_HEIGHT_OF_SQUARE);
+		game.updateMonsterMoving(monsterNumber, newMatrixLoc);
+	}
+	
 	@Override
 	public boolean onSceneTouchEvent(Scene pScene,
 			final TouchEvent pSceneTouchEvent) {
@@ -441,18 +445,9 @@ public class MainActivity extends SimpleBaseGameActivity implements
 			MatrixLocation2d locat = LayerConvertor
 					.graphicLocationToMaxtrix2d(location);
 			Tower towerInfo = game.getShopItem(shopItemDragging.getTag());
-			boolean conflicted = false;
-			for (Tower tower : game.getCurrentTowers()) {
-				if (tower.isIntersection(locat, towerInfo.matrixSize)) {
-					conflicted = true;
-				}
-			}
-			for (Monster monster : game.getCurrentMonsters()) {
-				if (monster.isIntersectionRelative(locat, towerInfo.matrixSize)) {
-					conflicted = true;
-				}
-			}
-
+			boolean conflicted = game.isTowerConflicted(locat, towerInfo.matrixSize) 
+					|| game.isTowerConflicted(locat, towerInfo.matrixSize);
+			
 			if (conflicted) {
 				itemCover.setColor(RED_COLOR);
 			} else {
@@ -556,8 +551,8 @@ public class MainActivity extends SimpleBaseGameActivity implements
 		return Color.RED;
 	}
 
-	private AnimatedSprite createMonsterAutoGoing(final Scene scene, Monster monster,
-			int tagIndex) {
+	private AnimatedSprite createMonsterAutoGoing(final Scene scene, final Monster monster,
+			final int tagIndex) {
 		final AnimatedSprite sprite = new AnimatedSprite(
 				monster.matrixLocation.columnIndex,
 				monster.matrixLocation.rowIndex,
@@ -567,11 +562,14 @@ public class MainActivity extends SimpleBaseGameActivity implements
 						* monster.matrixSize.height, this.mPlayerTextureRegion,
 				this.getVertexBufferObjectManager());
 
-		List<MatrixLocation2d> locs = pathAlgorithm.calcNextMoveMonster(tagIndex);
-		Path path = LayerConvertor.matrixToPath(locs);
-
-		sprite.registerEntityModifier(new PathModifier(MAX_TIME
-				/ monster.moveSpeed, path, null, new IPathModifierListener() {
+		final Rectangle healthBar = new Rectangle(0, 0,
+				LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE
+						* monster.matrixSize.width, 5,
+				this.getVertexBufferObjectManager());
+		healthBar.setColor(Color.GREEN);
+		
+		
+		IPathModifierListener pathListener = new IPathModifierListener() {
 			@Override
 			public void onPathStarted(final PathModifier pPathModifier,
 					final IEntity pEntity)
@@ -608,64 +606,38 @@ public class MainActivity extends SimpleBaseGameActivity implements
 			public void onPathWaypointFinished(
 					final PathModifier pPathModifier, final IEntity pEntity,
 					final int pWaypointIndex) {
-
+				
 			}
 
 			@Override
 			public void onPathFinished(final PathModifier pPathModifier,
 					final IEntity pEntity) {
-				mEngine.runOnUpdateThread(new Runnable() {
-					@Override
-					public void run() {
-						game.removeMonster(sprite.getTag());
-						monsters.remove(sprite);
-						scene.detachChild(sprite);
-					}
-				});
+				
+				Path tempPath = pPathModifier.getPath();
+				float endX = tempPath.getCoordinatesX()[tempPath.getSize() - 1];
+				float endY = tempPath.getCoordinatesY()[tempPath.getSize() - 1];
+				updateMonsterMoving(endX, endY, monster.number);
+				
+				List<MatrixLocation2d> locs = pathAlgorithm.calcNextMoveMonster(tagIndex);
+				if (locs != null && locs.size() > 1) {
+					Path path = LayerConvertor.matrixToPath(locs);
+					sprite.registerEntityModifier(new PathModifier(MAX_TIME
+							/ monster.moveSpeed, path, null, this));
+					healthBar.registerEntityModifier(new PathModifier(MAX_TIME
+							/ monster.moveSpeed, path));
+				}
 			}
-		}));
-
-		final Rectangle healthBar = new Rectangle(0, 0,
-				LayerConvertor.CONVERTOR_WIDTH_OF_SQUARE
-						* monster.matrixSize.width, 5,
-				this.getVertexBufferObjectManager());
-		healthBar.setColor(Color.GREEN);
-		healthBar.registerEntityModifier(new PathModifier(MAX_TIME
-				/ monster.moveSpeed, path, null, new IPathModifierListener() {
-			@Override
-			public void onPathStarted(final PathModifier pPathModifier,
-					final IEntity pEntity)
-
-			{
-
-			}
-
-			@Override
-			public void onPathWaypointStarted(final PathModifier pPathModifier,
-					final IEntity pEntity, final int pWaypointIndex) {
-
-			}
-
-			@Override
-			public void onPathWaypointFinished(
-					final PathModifier pPathModifier, final IEntity pEntity,
-					final int pWaypointIndex) {
-
-			}
-
-			@Override
-			public void onPathFinished(final PathModifier pPathModifier,
-					final IEntity pEntity) {
-				mEngine.runOnUpdateThread(new Runnable() {
-					@Override
-					public void run() {
-						// game.removeMonster(healthBar.getTag());
-						// monsters.remove(healthBar);
-						scene.detachChild(healthBar);
-					}
-				});
-			}
-		}));
+		};
+		
+		List<MatrixLocation2d> locs = pathAlgorithm.calcNextMoveMonster(tagIndex);
+		if (locs != null && locs.size() > 1) {
+			Path path = LayerConvertor.matrixToPath(locs);
+			sprite.registerEntityModifier(new PathModifier(MAX_TIME
+					/ monster.moveSpeed, path, null, pathListener));
+			healthBar.registerEntityModifier(new PathModifier(MAX_TIME
+					/ monster.moveSpeed, path));
+		}
+		
 		scene.attachChild(healthBar);
 		scene.attachChild(sprite);
 		healthBarMap.put(sprite, healthBar);

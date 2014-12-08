@@ -14,6 +14,7 @@ public class KingDefGame {
 	public List<Monster> monsterCharacter;
 	public Counter monsterNumber; // total of monsters include all maps
 	public Counter towerNumber; // total of towers include all maps, except shop items.
+	private MatrixLocation2d destination = new MatrixLocation2d(25, 4);
 
 	public KingDefGame(Context context) {
 		DatabaseCreator.openDatabase(context);
@@ -24,8 +25,32 @@ public class KingDefGame {
 		loadLevelData();
 	}
 
+	public MatrixLocation2d getDestination() {
+		return destination;
+	}
+	
 	public void resetMonsterPaths() {
 		
+	}
+	
+	public boolean isTowerConflicted(MatrixLocation2d objectLocation, MatrixSize2d objectSize) {
+		boolean conflicted = false;
+		for (Tower tower : getCurrentTowers()) {
+			if (tower.isIntersection(objectLocation, objectSize)) {
+				conflicted = true;
+			}
+		}
+		return conflicted;
+	}
+	
+	public boolean isMonsterConflicted(MatrixLocation2d objectLocation, MatrixSize2d objectSize) {
+		boolean conflicted = false;
+		for (Monster monster : getCurrentMonsters()) {
+			if (monster.isIntersection(objectLocation, objectSize)) {
+				conflicted = true;
+			}
+		}
+		return conflicted;
 	}
 	
 	// Check end game
